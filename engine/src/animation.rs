@@ -31,8 +31,7 @@ impl<T> Clone for State<T> {
 
         match *self {
             Nil => Nil,
-            Repeat(ref a, ref b, ref c) =>
-                Repeat(a.clone(), b.clone(), c.clone()),
+            Repeat(ref a, ref b, ref c) => Repeat(a.clone(), b.clone(), c.clone()),
             Function(ref a, ref b) => Function(a.clone(), b.clone()),
             Series(ref a) => Series(a.clone()),
             Parallel(ref a) => Parallel(a.clone()),
@@ -51,6 +50,7 @@ pub fn series<T>(mut list: List<T>) -> State<T> {
     State::Series(list)
 }
 
+#[macro_export]
 macro_rules! repeat (
     ($state: expr) => {
         $crate::animation::State::Repeat(None, box $state.clone(), box $state)
@@ -60,77 +60,68 @@ macro_rules! repeat (
     };
 );
 
+#[macro_export]
 macro_rules! function (
-    ($f: expr) => {
-        $crate::animation::State::Function($crate::timer::LocalTimer::empty(), Rc::new($f))
+    ($function: expr) => {
+        $crate::animation::State::Function($crate::timer::LocalTimer::empty(),
+                                           ::std::rc::Rc::new($function))
     };
-    ($timer: expr, $f: expr) => {
-        $crate::animation::State::Function($timer, Rc::new($f))
+    ($timer: expr, $function: expr) => {
+        $crate::animation::State::Function($timer, ::std::rc::Rc::new($function))
     };
 );
 
 
 
 pub fn rotate(total: Ms) -> State<Sprite> {
-    const ROUND: f32 = 6.28318530717958647692528676655900576;
-
     function!(move |sprite, timer| {
-        let time = timer.now % total;
-        let ratio = time as f32 / total as f32;
-        let radian = ROUND * ratio;
-        sprite.transform.rotation = math::rotation(radian);
-        timer.now = time;
-        Return::Remain
+        if timer.is_out() {
+            Return::Become(State::Nil)
+        }
+        else {
+            sprite.transform.rotation = math::rotation(timer.ratio());
+            Return::Remain
+        }
     })
 }
 
 
+#[macro_export]
+macro_rules! is_out {
+    ($timer: expr, $a: block $b: block) => (
+        if $timer.is_out()
+        { $a; Return::Become(State::Nil) }
+        else { $b; Return::Remain }
+    )
+}
+
+
 pub fn fade(ms: Ms, from: f32, to: f32) -> State<Sprite> {
-    let timer = Timer::new(ms);
-    let n = to - from;
-    function!(timer, move |sprite, timer| {
-        if timer.is_out() {
-            sprite.color_multiply.a = to;
-            Return::Become(State::Nil)
-        }
-        else {
-            sprite.color_multiply.a = n * timer.ratio() + from;
-            Return::Remain
-        }
+    function!(Timer::new(ms), move |sprite, timer| {
+        is_out!(timer,
+            { sprite.color_multiply.a = to }
+            { sprite.color_multiply.a = math::linear(from, to, timer.ratio()) }
+        )
     })
 }
 
 
 pub fn move_(ms: Ms, a: Vec2<f32>, b: Vec2<f32>) -> State<Sprite> {
     function!(Timer::new(ms), move |sprite, timer| {
-        let t = &mut sprite.transform;
-        if timer.is_out() {
-            t.position = b;
-            Return::Become(State::Nil)
-        } else {
-            let now = (b-a) * timer.ratio() + a;
-            t.position = now;
-            Return::Remain
-        }
+        is_out!(timer,
+            { sprite.transform.position = b }
+            { sprite.transform.position = math::linear(a, b, timer.ratio()) }
+        )
     })
 }
 
 
-pub fn curve(ms: Ms, p: [Vec2<f32>; 4]) -> State<Sprite> {
+pub fn curve(ms: Ms, control: [Vec2<f32>; 4]) -> State<Sprite> {
     function!(Timer::new(ms), move |sprite, timer| {
-        // Cubic Bézier curves
-        if timer.is_out() { return Return::Become(State::Nil) }
-
-        let t = timer.ratio();
-        let r = 1.0 - t;
-
-        let a =               r.powi(3);
-        let b = 3.0*t        *r.powi(2);
-        let c = 3.0*t.powi(2)*r        ;
-        let d =     t.powi(3)          ;
-
-        sprite.transform.position = p[0] * a + p[1] * b + p[2] * c + p[3] * d;
-        Return::Remain
+        is_out!(timer,
+            { sprite.transform.position = control[3] }
+            { sprite.transform.position = math::curve(control, timer.ratio()) }
+        )
     })
 }
 
