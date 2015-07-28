@@ -1,0 +1,26 @@
+[package]
+
+name = "sansa"
+version = "0.0.1"
+authors = ["tioover <tioover@gmail.com>"]
+
+[dependencies]
+num = "*"
+rand = "*"
+glutin = "*"
+glium = "*"
+noise = "*"
+time = "*"
+image = "*"
+nalgebra = "*"
+uuid = "*"
+
+[dependencies.engine]
+path = "engine"
+
+[profile.dev]
+debug = true   # Controls whether the compiler passes -g or `--cfg ndebug`
+rpath = false  # Controls whether the compiler passes `-C rpath`
+lto = false    # Controls `-C lto` for binaries and staticlib
+codegen_units = 4
+opt-level = 1

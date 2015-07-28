@@ -1,0 +1,22 @@
+[package]
+
+name = "engine"
+version = "0.0.1"
+authors = ["tioover <tioover@gmail.com>"]
+
+
+
+[lib]
+name = "engine"
+path = "src/lib.rs"
+
+[dependencies]
+num = "*"
+glutin = "*"
+glium = "*"
+time = "*"
+image = "*"
+uuid = "*"
+nalgebra = "*"
+unicode-normalization = "*"
+freetype-rs = "*"
