@@ -30,7 +30,7 @@ use std::path::PathBuf;
 use na::Vec2;
 use glium::Display;
 use engine::{Texture, Manager, UIBuilder, Sprite, Update, Text,
-             Renderable, Engine, build_display, update};
+             Engine, build_display, update};
 use engine::timer::Ms;
 use object::Block;
 use tile::{Tile, TileGen};
@@ -103,6 +103,13 @@ fn main() {
             .content("Answer to the Ultimate Question of Life, the Universe, and Everything".to_string())
             .build(&display);
 
+    // {
+    //     use engine::sprite::animate;
+    //     use engine::animation::State;
+    //     let state = animate::rotate(1000);
+    //     text.sprite.set_state(repeat!(state));
+    // }
+
     'main: loop {
         let event = { // update
             let mut queue: Vec<&mut Update> = Vec::new();
@@ -129,28 +136,28 @@ fn main() {
             ground = make_tiles(&game, &tile);
             let output = game.next(Input::Move ((offset.x, offset.y)));
             last_turn = now;
-            offset = na::zero();
             match output {
                 Output::Move(offset) => {
-                    // let v = tile.vertical();
-                    // let h = tile.horizontal();
-                    // camera.move_(turn_time, match offset {
-                    //     ( 0,  0) => na![ 0,  0],
-                    //     ( 1,  1) => na![ 0,  v],
-                    //     (-1, -1) => na![ 0, -v],
-                    //     (-1,  1) => na![-h,  0],
-                    //     ( 1, -1) => na![ h,  0],
-                    //     _ => unreachable!()
-                    // });
+                    let v = tile.vertical();
+                    let h = tile.horizontal();
+                    camera.move_(turn_time, na::cast(match offset {
+                        ( 0,  0) => na![ 0,  0],
+                        ( 1,  1) => na![ 0,  v],
+                        (-1, -1) => na![ 0, -v],
+                        (-1,  1) => na![-h,  0],
+                        ( 1, -1) => na![ h,  0],
+                        _ => unreachable!()
+                    }));
                 }
             }
+            offset = na::zero();
         }
         // render
         let mut queue: Vec<_> = ground.iter().collect();
         queue.push(&text.sprite);
         env.engine.render_sprites(queue);
         env.update();
-        // println!("{}", env.engine.timer.fps());
+        println!("FPS: {}", env.engine.timer.fps());
     }
 }
 
@@ -158,8 +165,8 @@ fn main() {
 fn make_tiles(game: &Game, tile: &TileGen) -> Vec<Sprite> {
     let mut sprites = Vec::new();
     for k in 0..game::LAYER {
-        for j in -50..50 {
-            for i in -50..50 {
+        for j in -10..10 {
+            for i in -10..10 {
                 let unit = game.get([i, j, k]);
                 let block = unit.block;
                 let role = unit.role;

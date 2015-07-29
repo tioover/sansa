@@ -197,7 +197,7 @@ pub fn draw(style: &Text) -> Canvas {
 
     macro_rules! draw_underline {() => (
         if style.underline > 0 {
-            let size = style.underline as i32;
+            let size = scale!(style.underline);
             let shift = 0;
             canvas.rect(
                 Vec2::new(padding, baseline+shift),

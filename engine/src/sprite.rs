@@ -111,7 +111,7 @@ pub mod animate {
     use math;
     use na::Vec2;
     use sprite::Sprite;
-    use animation::{State, Return};
+    use animation::State;
     use timer::{Ms, Timer};
 
     state_next_fn! { Sprite }
@@ -240,7 +240,7 @@ impl Renderable for Batch {
 
 pub fn render(context: &Context, sprites: Vec<&Sprite>) {
     let len = sprites.len();
-    let camera = context.camera.matrix;
+    let camera = context.camera.matrix();
     let mut target = context.display.draw();
     let mut head = 0;
 

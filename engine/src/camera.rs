@@ -1,39 +1,50 @@
-use na::Diag;
-use math::Mat;
+use na::{Diag, Vec2, zero};
+use math::{Mat, translation, linear};
+use timer::Ms;
+use animation::{Return, State};
+use timer::Timer;
+
 use glium::Display;
 
 pub struct Camera<'display> {
     display: &'display Display,
-    pub matrix: Mat,
-    dimensions: (u32, u32),
-    factor: f32,
+    offset: Vec2<f32>,
+    state: State<Camera<'display>>,
 }
+
 
 
 impl<'display> Camera<'display> {
     pub fn new(display: &'display Display) -> Camera<'display> {
-        let f = display.get_window().unwrap().hidpi_factor();
-        let dim = display.get_framebuffer_dimensions();
-        let mat = Camera::build_matrix(dim, f);
         Camera {
             display: display,
-            matrix: mat,
-            factor: f,
-            dimensions: dim,
+            offset: ::na::zero(),
+            state: State::Nil,
         }
     }
 
-    fn build_matrix((w, h): (u32, u32), factor: f32) -> Mat {
+    pub fn move_(&mut self, time: Ms, offset: Vec2<f32>) {
+        self.offset = zero();
+        let state: State<Camera> = function!(Timer::new(time), move |camera, timer| {
+            camera.offset = linear(zero(), offset, timer.ratio());
+            Return::Remain
+        });
+        self.state = state;
+    }
+
+
+    pub fn matrix(&self) -> Mat {
+        let factor = self.display.get_window().unwrap().hidpi_factor();
+        let (w, h) = self.display.get_framebuffer_dimensions();
         let (w, h) = (w as f32, h as f32);
-        let f = factor * 2.0; 
-        Mat::from_diag(&na![f/w, f/h, -1.0, 1.0])
+        let f = factor * 2.0;
+        Mat::from_diag(&na![f/w, f/h, -1.0, 1.0]) * translation(-self.offset)
     }
 
-    pub fn update(&mut self) {
-        let dim = self.display.get_framebuffer_dimensions();
-        if dim != self.dimensions {
-            self.dimensions = dim;
-            self.matrix = Camera::build_matrix(dim, self.factor);
-        }
+    pub fn update(&mut self, delta: Ms) {
+        next(self, delta)
     }
 }
+
+
+state_next_fn! { Camera }

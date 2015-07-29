@@ -54,6 +54,7 @@ pub use resources::Manager;
 pub use transform::Transform;
 pub use texture::Texture;
 pub use engine::Engine;
+pub use camera::Camera;
 
 use glium::glutin::WindowBuilder;
 use glium::DisplayBuild;

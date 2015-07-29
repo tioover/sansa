@@ -1,7 +1,6 @@
 // use std::collections::LinkedList
 use rand;
 use noise::{Brownian2, perlin2};
-use na::Vec3;
 use object::{Block, RoleKind, Role};
 
 pub const LAYER: i32 = 8;

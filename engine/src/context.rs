@@ -26,8 +26,8 @@ impl<'display> Context<'display> {
         }
     }
 
-    pub fn update(&mut self) {
-        self.camera.update()
+    pub fn update(&mut self, delta: ::timer::Ms) {
+        self.camera.update(delta)
     }
 
     #[inline]

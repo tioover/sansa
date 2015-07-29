@@ -30,7 +30,7 @@ impl<'display> Engine<'display> {
 
     pub fn update(&mut self) {
         self.timer.update();
-        self.context.update();
+        self.context.update(self.timer.delta);
     }
 
     pub fn render_sprites(&self, sprites: Vec<&Sprite>) {

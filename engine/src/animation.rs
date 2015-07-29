@@ -73,8 +73,8 @@ macro_rules! function (
 macro_rules! if_out {
     ($timer: expr, $a: block $b: block) => (
         if $timer.is_out()
-        { $a; Return::Become(State::Nil) }
-        else { $b; Return::Remain }
+        { $a; $crate::animation::Return::Become(State::Nil) }
+        else { $b; $crate::animation::Return::Remain }
     )
 }
 
@@ -123,9 +123,7 @@ impl<T> State<T> {
                 if let Nil = **state {
                     *state = template.clone();
                 }
-                else {
-                    next!(**state);
-                }
+                next!(**state);
                 if let Some (ref mut i) = *index { *i -= 1 }
             },
 
@@ -147,8 +145,8 @@ macro_rules! state_next_fn (
             swap(&mut state, &mut x.state);
             let new_state = state.next(x, delta);
             x.state = match new_state {
-                Return::Become (new) => new,
-                Return::Remain => state,
+                $crate::animation::Return::Become (new) => new,
+                $crate::animation::Return::Remain => state,
             }
         }
     )
