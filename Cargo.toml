@@ -23,4 +23,3 @@ debug = true   # Controls whether the compiler passes -g or `--cfg ndebug`
 rpath = false  # Controls whether the compiler passes `-C rpath`
 lto = false    # Controls `-C lto` for binaries and staticlib
 codegen_units = 4
-opt-level = 1

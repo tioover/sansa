@@ -84,7 +84,16 @@ impl<T> State<T> {
     pub fn next(&mut self, data: &mut T, delta: Ms) -> Return<T> {
         use self::State::*;
 
+        macro_rules! next (
+            ($s: expr) => (
+                if let Return::Become(x) = $s.next(data, delta) {
+                    $s = x;
+                }
+            )
+        );
+
         let stop = Return::Become(Nil);
+
         match *self {
             Nil => {}
 
@@ -92,19 +101,17 @@ impl<T> State<T> {
                 loop {
                     if list.is_empty() { return stop }
                     let mut front = list.pop().unwrap();
-                    if let Nil = front {}
-                    else {
-                        front.next(data, delta);
-                        list.push(front);
-                        break
-                    }
+                    if let Nil = front { continue }
+                    next!(front);
+                    list.push(front);
+                    break
                 }
             }
 
             Parallel(ref mut list) => {
                 let mut flag = true;
                 for state in list {
-                    state.next(data, delta);
+                    next!(*state);
                     if let Nil = *state {}
                     else { flag = false }
                 }
@@ -113,22 +120,18 @@ impl<T> State<T> {
 
             Repeat(ref mut index, ref template, ref mut state) => {
                 if let Some(0) = *index { return stop }
+                if let Nil = **state {
+                    *state = template.clone();
+                }
                 else {
-                    if let Nil = **state {
-                        *state = template.clone();
-                    }
-                    else {
-                        state.next(data, delta);
-                    }
+                    next!(**state);
                 }
                 if let Some (ref mut i) = *index { *i -= 1 }
             },
 
             Function(ref mut timer, ref function) => {
                 timer.update(delta);
-                if let Return::Become(state) = function(data, timer) {
-                    return Return::Become(state)
-                }
+                return function(data, timer)
             }
         }
         Return::Remain
