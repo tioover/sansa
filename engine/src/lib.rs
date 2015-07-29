@@ -22,6 +22,8 @@ macro_rules! na {
 }
 
 
+#[macro_use]
+pub mod animation;
 pub mod canvas;
 pub mod color;
 pub mod event;
@@ -30,7 +32,6 @@ pub mod resources;
 pub mod sprite;
 pub mod timer;
 pub mod ui;
-pub mod animation;
 mod transform;
 mod mesh;
 mod context;

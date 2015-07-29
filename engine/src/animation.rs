@@ -1,10 +1,7 @@
-use na::Vec2;
 use std::rc::Rc;
-use std::mem;
 use timer::Ms;
 use timer::Timer;
-use sprite::Sprite;
-use math;
+
 
 pub type List<T> = Vec<State<T>>;
 
@@ -73,7 +70,7 @@ macro_rules! function (
 
 
 #[macro_export]
-macro_rules! is_out {
+macro_rules! if_out {
     ($timer: expr, $a: block $b: block) => (
         if $timer.is_out()
         { $a; Return::Become(State::Nil) }
@@ -83,54 +80,8 @@ macro_rules! is_out {
 
 
 
-pub fn rotate(total: Ms) -> State<Sprite> {
-    function!(Timer::new(total), move |sprite, timer| {
-        is_out!(timer,
-            { sprite.transform.rotation = math::rotation(0.0) }
-            { sprite.transform.rotation = math::rotation(timer.ratio()) }
-        )
-    })
-}
-
-
-pub fn fade(ms: Ms, from: f32, to: f32) -> State<Sprite> {
-    function!(Timer::new(ms), move |sprite, timer| {
-        is_out!(timer,
-            { sprite.color_multiply.a = to }
-            { sprite.color_multiply.a = math::linear(from, to, timer.ratio()) }
-        )
-    })
-}
-
-
-pub fn move_(ms: Ms, a: Vec2<f32>, b: Vec2<f32>) -> State<Sprite> {
-    function!(Timer::new(ms), move |sprite, timer| {
-        is_out!(timer,
-            { sprite.transform.position = b }
-            { sprite.transform.position = math::linear(a, b, timer.ratio()) }
-        )
-    })
-}
-
-
-pub fn curve(ms: Ms, control: [Vec2<f32>; 4]) -> State<Sprite> {
-    function!(Timer::new(ms), move |sprite, timer| {
-        is_out!(timer,
-            { sprite.transform.position = control[3] }
-            { sprite.transform.position = math::curve(control, timer.ratio()) }
-        )
-    })
-}
-
-
-pub fn fade_in(ms: Ms) -> State<Sprite> { fade(ms, 0.0, 1.0) }
-
-
-pub fn fade_out(ms: Ms) -> State<Sprite> { fade(ms, 1.0, 0.0) }
-
-
 impl<T> State<T> {
-    fn next(&mut self, data: &mut T, delta: Ms) -> Return<T> {
+    pub fn next(&mut self, data: &mut T, delta: Ms) -> Return<T> {
         use self::State::*;
 
         let stop = Return::Become(Nil);
@@ -185,13 +136,18 @@ impl<T> State<T> {
 }
 
 
-pub fn next(sprite: &mut Sprite, delta: Ms) {
-    let mut state = State::Nil;
-    mem::swap(&mut state, &mut sprite.state);
-    let new_state = state.next(sprite, delta);
-    sprite.state = match new_state {
-        Return::Become (new) => new,
-        Return::Remain => state,
-    }
-}
+macro_rules! state_next_fn (
+    ($T: ty) => (
+        pub fn next(x: &mut $T, delta: ::timer::Ms) {
+            use std::mem::swap;
+            let mut state = ::animation::State::Nil;
+            swap(&mut state, &mut x.state);
+            let new_state = state.next(x, delta);
+            x.state = match new_state {
+                Return::Become (new) => new,
+                Return::Remain => state,
+            }
+        }
+    )
+);
 
