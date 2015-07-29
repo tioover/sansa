@@ -27,7 +27,7 @@ impl Game {
     pub fn new((x, y): (i32, i32)) -> Game {
         Game {
             turn: 0,
-            player: Role::new(RoleKind::Player, v![x/2, y/2, 1]),
+            player: Role::new(RoleKind::Player, na![x/2, y/2, 1]),
             map: Map::new((x, y)),
         }
     }

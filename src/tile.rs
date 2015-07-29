@@ -21,9 +21,9 @@ impl Tile for Block {
         use object::Block::*;
 
         match *self {
-            Land   => v![0, 0],
-            River  => v![if rand::random() {0} else {1}, 1],
-            Nil    => v![0, 0],
+            Land   => na![0, 0],
+            River  => na![if rand::random() {0} else {1}, 1],
+            Nil    => na![0, 0],
         }
     }
 }
@@ -35,8 +35,8 @@ impl Tile for RoleKind {
         use object::RoleKind::*;
 
         match *self {
-            Player => v![0, 2],
-            Enemy  => v![1, 2],
+            Player => na![0, 2],
+            Enemy  => na![1, 2],
         }
     }
 }
@@ -72,7 +72,7 @@ impl TileGen {
     pub fn new(manager: &Manager<Texture>) -> TileGen {
         let tex = manager.get("block.png");
         TileGen {
-            image: Image::new(tex.clone(), v![TILE_SIZE, TILE_SIZE]),
+            image: Image::new(tex.clone(), na![TILE_SIZE, TILE_SIZE]),
             tile_size: TILE_SIZE,
             display_size: 64,
             margin: 8,
@@ -80,12 +80,12 @@ impl TileGen {
     }
 
     pub fn sprite(&self, offset: Vec2<i32>, (i, j): (i32, i32)) -> Sprite {
-        let size = v![self.display_size, self.display_size] + self.margin;
+        let size = na![self.display_size, self.display_size] + self.margin;
         let image = self.image.clone()
             .offset(offset * self.tile_size);
         let (a, b) = (size.x/2, size.y/4);
-        let x = v![a, b]*i;
-        let y = v![a, -b]*-j;
+        let x = na![a, b]*i;
+        let y = na![a, -b]*-j;
         Sprite::new(size-self.margin, image).position(na::cast(x+y))
     }
 }

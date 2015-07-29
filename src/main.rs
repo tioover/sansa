@@ -8,11 +8,18 @@ extern crate rand;
 extern crate noise;
 extern crate uuid;
 extern crate time;
+#[macro_use]
 extern crate engine;
 
-macro_rules! v {
-    ($x: expr, $y: expr) => (Vec2::new($x, $y));
-    ($x: expr, $y: expr, $z: expr) => (Vec3::new($x, $y, $z))
+macro_rules! na {
+    ($x: expr) =>
+        (::na::Vec1::new($x));
+    ($x: expr, $y: expr) =>
+        (::na::Vec2::new($x, $y));
+    ($x: expr, $y: expr, $z: expr) =>
+        (::na::Vec3::new($x, $y, $z));
+    ($x: expr, $y: expr, $z: expr, $w: expr) =>
+        (::na::Vec4::new($x, $y, $z, $w));
 }
 
 mod object;
@@ -108,11 +115,11 @@ fn main() {
 
             if let &(_, Some (x)) = e {
                 offset = match x {
-                    W => v![ 1,  1],
-                    S => v![-1, -1],
-                    A => v![-1,  1],
-                    D => v![ 1, -1],
-                    _ => v![ 0,  0],
+                    W => na![ 1,  1],
+                    S => na![-1, -1],
+                    A => na![-1,  1],
+                    D => na![ 1, -1],
+                    _ => na![ 0,  0],
                 }
             }
         }
@@ -128,11 +135,11 @@ fn main() {
                     // let v = tile.vertical();
                     // let h = tile.horizontal();
                     // camera.move_(turn_time, match offset {
-                    //     ( 0,  0) => v![ 0,  0],
-                    //     ( 1,  1) => v![ 0,  v],
-                    //     (-1, -1) => v![ 0, -v],
-                    //     (-1,  1) => v![-h,  0],
-                    //     ( 1, -1) => v![ h,  0],
+                    //     ( 0,  0) => na![ 0,  0],
+                    //     ( 1,  1) => na![ 0,  v],
+                    //     (-1, -1) => na![ 0, -v],
+                    //     (-1,  1) => na![-h,  0],
+                    //     ( 1, -1) => na![ h,  0],
                     //     _ => unreachable!()
                     // });
                 }

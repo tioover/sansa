@@ -18,7 +18,7 @@ impl Transform {
             position: na::zero(),
             rotation: math::rotation(0.0),
             scale: 1.0,
-            offset: Vec2::new(0.0, 0.0),
+            offset: na![0.0, 0.0],
         }
     }
 

@@ -1,4 +1,4 @@
-use na::{Vec4, Diag};
+use na::Diag;
 use math::Mat;
 use glium::Display;
 
@@ -26,7 +26,7 @@ impl<'display> Camera<'display> {
     fn build_matrix((w, h): (u32, u32), factor: f32) -> Mat {
         let (w, h) = (w as f32, h as f32);
         let f = factor * 2.0; 
-        Mat::from_diag(&Vec4::new(f/w, f/h, -1.0, 1.0))
+        Mat::from_diag(&na![f/w, f/h, -1.0, 1.0])
     }
 
     pub fn update(&mut self) {

@@ -1,9 +1,8 @@
-use na;
 use na::Vec2;
 use std::rc::Rc;
 use std::mem;
 use timer::Ms;
-use timer::LocalTimer as Timer;
+use timer::Timer;
 use sprite::Sprite;
 use math;
 
@@ -63,7 +62,7 @@ macro_rules! repeat (
 #[macro_export]
 macro_rules! function (
     ($function: expr) => {
-        $crate::animation::State::Function($crate::timer::LocalTimer::empty(),
+        $crate::animation::State::Function($crate::timer::Timer::empty(),
                                            ::std::rc::Rc::new($function))
     };
     ($timer: expr, $function: expr) => {
@@ -73,19 +72,6 @@ macro_rules! function (
 
 
 
-pub fn rotate(total: Ms) -> State<Sprite> {
-    function!(move |sprite, timer| {
-        if timer.is_out() {
-            Return::Become(State::Nil)
-        }
-        else {
-            sprite.transform.rotation = math::rotation(timer.ratio());
-            Return::Remain
-        }
-    })
-}
-
-
 #[macro_export]
 macro_rules! is_out {
     ($timer: expr, $a: block $b: block) => (
@@ -93,6 +79,17 @@ macro_rules! is_out {
         { $a; Return::Become(State::Nil) }
         else { $b; Return::Remain }
     )
+}
+
+
+
+pub fn rotate(total: Ms) -> State<Sprite> {
+    function!(Timer::new(total), move |sprite, timer| {
+        is_out!(timer,
+            { sprite.transform.rotation = math::rotation(0.0) }
+            { sprite.transform.rotation = math::rotation(timer.ratio()) }
+        )
+    })
 }
 
 
@@ -188,13 +185,13 @@ impl<T> State<T> {
 }
 
 
-// pub fn next(sprite: &mut Sprite, delta: Ms) {
-//     let mut state = State::Nil;
-//     mem::swap(&mut state, &mut sprite.state);
-//     let new_state = state.next(sprite, delta);
-//     sprite.state = match new_state {
-//         Return::Become (new) => new,
-//         Return::Remain => state,
-//     }
-// }
+pub fn next(sprite: &mut Sprite, delta: Ms) {
+    let mut state = State::Nil;
+    mem::swap(&mut state, &mut sprite.state);
+    let new_state = state.next(sprite, delta);
+    sprite.state = match new_state {
+        Return::Become (new) => new,
+        Return::Remain => state,
+    }
+}
 

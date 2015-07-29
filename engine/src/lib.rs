@@ -10,6 +10,18 @@ extern crate freetype;
 extern crate unicode_normalization;
 
 
+macro_rules! na {
+    ($x: expr) =>
+        (::na::Vec1::new($x));
+    ($x: expr, $y: expr) =>
+        (::na::Vec2::new($x, $y));
+    ($x: expr, $y: expr, $z: expr) =>
+        (::na::Vec3::new($x, $y, $z));
+    ($x: expr, $y: expr, $z: expr, $w: expr) =>
+        (::na::Vec4::new($x, $y, $z, $w));
+}
+
+
 pub mod canvas;
 pub mod color;
 pub mod event;
@@ -19,16 +31,18 @@ pub mod sprite;
 pub mod timer;
 pub mod ui;
 pub mod animation;
-pub mod transform;
-pub mod mesh;
-pub mod context;
-pub mod image;
-pub mod camera;
-pub mod renderable;
-pub mod texture;
+mod transform;
+mod mesh;
+mod context;
+mod image;
+mod camera;
+mod renderable;
+mod texture;
+mod engine;
+
 
 pub use glium::{Frame, Display};
-pub use timer::{GlobalTimer, LocalTimer, Ms};
+pub use timer::{ProgramTimer, Timer, Ms};
 pub use context::Context;
 pub use image::Image;
 pub use renderable::{Renderable, render};
@@ -38,45 +52,12 @@ pub use ui::{GlyphCache, Glyph, Text, UI, UIBuilder};
 pub use resources::Manager;
 pub use transform::Transform;
 pub use texture::Texture;
+pub use engine::Engine;
 
-use std::path::PathBuf;
 use glium::glutin::WindowBuilder;
 use glium::DisplayBuild;
 
 
-
-pub struct Engine<'display> {
-    pub timer: GlobalTimer,
-    pub display: &'display Display,
-    pub context: Context<'display>,
-    pub glyph_cache: GlyphCache,
-}
-
-
-impl<'display> Engine<'display> {
-    pub fn new(display: &'display Display) -> Engine<'display> {
-        Engine {
-            timer: GlobalTimer::new(),
-            display: display,
-            context: Context::new(display),
-            glyph_cache: GlyphCache::new(),
-        }
-    }
-
-    pub fn text(&self, font: PathBuf) -> Text {
-        Text::new(font, self.glyph_cache.clone())
-            .hidpi_factor(self.context.hidpi_factor)
-    }
-
-    pub fn update(&mut self) {
-        self.timer.update();
-        self.context.update();
-    }
-
-    pub fn render_sprites(&self, sprites: Vec<&Sprite>) {
-        sprite::render(&self.context, sprites)
-    }
-}
 
 
 pub fn build_display(title: String, (width, height): (u32, u32)) -> Display {

@@ -12,6 +12,8 @@ use event::{Update, Event};
 use transform::Transform;
 use math::Mat;
 use timer::Ms;
+use animation;
+use animation::State;
 
 
 #[derive(Clone)]
@@ -20,6 +22,7 @@ pub struct Sprite {
     pub size: Vec2<f32>,
     pub transform: Transform,
     pub color_multiply: Color,
+    pub state: State<Sprite>,
 }
 
 
@@ -30,6 +33,7 @@ impl Sprite {
             size: na::cast(size),
             transform: Transform::new(),
             color_multiply: Color::white(),
+            state: State::Nil,
         }
     }
 
@@ -41,7 +45,7 @@ impl Sprite {
 
         macro_rules! m {
             ($x: expr, $y: expr) =>
-                (*transform.compute(Vec2::new($x, $y)).as_array())
+                (*transform.compute(na![$x, $y]).as_array())
         }
         macro_rules! n { ($x: expr, $y: expr) => ([$x+i, $y+j]) }
 
@@ -89,6 +93,7 @@ impl Sprite {
 impl Update for Sprite {
     fn update(&mut self, delta: Ms, event: Box<Event>)
             -> Box<Event> {
+        animation::next(self, delta);
         return event;
     }
 }
@@ -100,7 +105,7 @@ impl Renderable for Sprite {
             &uniform! {
                 matrix: parent,
                 color_multiply: self.color_multiply.as_array(),
-                tex_offset: Vec2::new(0.0, 0.0),
+                tex_offset: na![0.0, 0.0],
                 tex: &self.image.texture.data,
             }
         );
@@ -161,7 +166,7 @@ impl Renderable for Batch {
             &uniform! {
                 matrix: parent,
                 color_multiply: self.color_multiply.as_array(),
-                tex_offset: Vec2::new(0.0, 0.0),
+                tex_offset: na![0.0, 0.0],
                 tex: &self.texture.data
             }
         );

@@ -12,17 +12,17 @@ pub fn now() -> Ms {
 }
 
 
-pub struct GlobalTimer {
+pub struct ProgramTimer {
     updates: VecDeque<Ns>,
     now: Ns,
     pub delta: Ms,
 }
 
 
-impl GlobalTimer {
-    pub fn new() -> GlobalTimer {
+impl ProgramTimer {
+    pub fn new() -> ProgramTimer {
         let now = time::precise_time_ns();
-        GlobalTimer {
+        ProgramTimer {
             updates: VecDeque::with_capacity(128),
             now: now,
             delta: 0,
@@ -52,20 +52,20 @@ impl GlobalTimer {
 
 
 #[derive(Clone)]
-pub struct LocalTimer {
+pub struct Timer {
     pub total: Ms,
     pub delta: Ms,
     pub now  : Ms,
 }
 
 
-impl LocalTimer {
-    pub fn new(time: Ms) -> LocalTimer {
-        LocalTimer { total: time, now: 0, delta: 0 }
+impl Timer {
+    pub fn new(time: Ms) -> Timer {
+        Timer { total: time, now: 0, delta: 0 }
     }
 
-    pub fn empty() -> LocalTimer {
-        LocalTimer::new(0)
+    pub fn empty() -> Timer {
+        Timer::new(0)
     }
 
     pub fn ratio(&self) -> f32 {

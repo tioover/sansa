@@ -1,6 +1,7 @@
 use glium;
-use glium::Display;    
-    
+use glium::Display;
+
+
 #[derive(Copy, Clone)]
 pub struct Vertex {
     pub position: [f32; 2],

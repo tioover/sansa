@@ -27,11 +27,11 @@ impl Event {
         let f = context.hidpi_factor;
         let size = {
             let (w, h) = context.display.get_framebuffer_dimensions();
-            Vec2::new(w as f32, h as f32)
+            na![w as f32, h as f32]
         };
 
         let mut string = String::new();
-        let mut mouse_position = Vec2::new(0.0, 0.0);
+        let mut mouse_position = na![0.0, 0.0];
         let mut mouse_press = None;
         let mut mouse_release = None;
         let mut scroll = None;
@@ -41,7 +41,7 @@ impl Event {
         for event in display.poll_events() {
             match event {
                 MouseMoved ((x, y)) => {
-                    let position = Vec2::new(x as f32, y as f32);
+                    let position = na![x as f32, y as f32];
                     let mut a = (position - size/2.0) / f;
                     a.y = -a.y;
                     mouse_position = a;

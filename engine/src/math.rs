@@ -1,7 +1,7 @@
 use std::ops::{Add, Sub, Mul};
 use num;
 use num::Float;
-use na::{Vec1, Vec2, Vec4, Mat4, Rot2, Diag};
+use na::{Vec2, Vec4, Mat4, Rot2, Diag};
 
 pub type Mat = Mat4<f32>;
 
@@ -23,7 +23,7 @@ pub fn translation(vec: Vec2<f32>) -> Mat {
 pub fn rotation(t: f32) -> Rot2<f32> {
     const ROUND: f32 = 6.28318530717958647692528676655900576;
 
-    Rot2::new(Vec1::new(t * ROUND))
+    Rot2::new(na![t * ROUND])
 }
 
 
