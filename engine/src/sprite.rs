@@ -38,29 +38,32 @@ impl Sprite {
 
     fn vertices(size: Vec2<f32>, transform: &Transform, image: &Image)
                 -> [Vertex; 4] {
+        let tex_w = image.texture.width as f32;
+        let tex_h = image.texture.height as f32;
         let &[w, h] = image.size.as_array();
         let &[i, j] = image.offset.as_array();
         let &[a, b] = (size / 2.0).as_array();
 
-        macro_rules! m {
-            ($x: expr, $y: expr) =>
-                (*transform.compute(na![$x, $y]).as_array())
+        macro_rules! vertex {
+            ([$a:expr, $b:expr] [$c:expr, $d:expr]) => (
+                Vertex {
+                    position: *transform.compute(na![$a, $b]).as_array(),
+                    tex_coords: [($c+i)/tex_w, 1.0-($d+j)/tex_h],
+                }
+            )
         }
-        macro_rules! n { ($x: expr, $y: expr) => ([$x+i, $y+j]) }
-
         [
-            Vertex { position: m![-a,  b], tex_coords: n![0.0, 0.0] },
-            Vertex { position: m![ a,  b], tex_coords: n![  w, 0.0] },
-            Vertex { position: m![-a, -b], tex_coords: n![0.0,   h] },
-            Vertex { position: m![ a, -b], tex_coords: n![  w,   h] },
+            vertex!([-a,  b] [0.0, 0.0]),
+            vertex!([ a,  b] [  w, 0.0]),
+            vertex!([-a, -b] [0.0,   h]),
+            vertex!([ a, -b] [  w,   h]),
         ]
     }
 
     #[inline]
     fn mesh(&self, display: &Display) -> Mesh {
-        Mesh::rectangle(display,
-            Sprite::vertices(self.size, &self.transform,
-                             &self.image))
+        let vertices = Sprite::vertices(self.size, &self.transform, &self.image);
+        Mesh::rectangle(display, vertices)
     }
 
     #[inline]
@@ -169,7 +172,6 @@ impl Renderable for Sprite {
             &uniform! {
                 matrix: parent,
                 color_multiply: self.color_multiply.as_array(),
-                tex_offset: na![0.0, 0.0],
                 tex: &self.image.texture.data,
             }
         );
@@ -230,7 +232,6 @@ impl Renderable for Batch {
             &uniform! {
                 matrix: parent,
                 color_multiply: self.color_multiply.as_array(),
-                tex_offset: na![0.0, 0.0],
                 tex: &self.texture.data
             }
         );

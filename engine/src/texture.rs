@@ -8,6 +8,8 @@ use resources::Resource;
 
 pub struct Texture {
     pub id: Uuid,
+    pub height: u32,
+    pub width: u32,
     pub data: Texture2d,
 }
 
@@ -15,9 +17,12 @@ pub struct Texture {
 impl Texture {
     pub fn new<'a, T>(display: &Display, source: T) -> Texture
             where T: Texture2dDataSource<'a> {
+        let tex = Texture2d::new(display, source).unwrap();
         Texture {
             id: Uuid::new_v4(),
-            data: Texture2d::new(display, source).unwrap(),
+            width: tex.get_width(),
+            height: tex.get_height().unwrap(),
+            data: tex,
         }
     }
 }
