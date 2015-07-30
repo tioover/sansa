@@ -238,27 +238,23 @@ impl Renderable for Batch {
 }
 
 
-pub fn render(context: &Context, sprites: Vec<&Sprite>) {
+pub fn render(context: &Context, target: &mut Frame, sprites: Vec<&Sprite>, parent: Mat) {
     let len = sprites.len();
-    let camera = context.camera.matrix();
-    let mut target = context.display.draw();
     let mut head = 0;
 
-    target.clear_color(0.75, 0.75, 1.0, 1.0);
 
     for i in 1..len+1 {
         if i == len || !sprites[head].similar(sprites[i]) {
             if i-head == 1 {
-                sprites[head].draw(context, &mut target, camera);
+                sprites[head].draw(context, target, parent);
             }
             else {
                 Batch::new(context.display, &sprites[head..i])
-                    .draw(context, &mut target, camera);
+                    .draw(context, target, parent);
             }
             head = i;
         }
     }
-    target.finish().unwrap();
 }
 
 

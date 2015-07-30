@@ -1,8 +1,9 @@
 use std::path::PathBuf;
-use glium::Display;
+use glium::{Display, Frame};
 use ui::{GlyphCache, Text};
 use context::Context;
-use sprite::{Sprite, render};
+use sprite::Sprite;
+use math::Mat;
 use timer::ProgramTimer;
 
 pub struct Engine<'display> {
@@ -30,11 +31,10 @@ impl<'display> Engine<'display> {
 
     pub fn update(&mut self) {
         self.timer.update();
-        self.context.update(self.timer.delta);
     }
 
-    pub fn render_sprites(&self, sprites: Vec<&Sprite>) {
-        render(&self.context, sprites)
+    pub fn render_sprites(&self, target: &mut Frame, sprites: Vec<&Sprite>, parent: Mat) {
+        ::sprite::render(&self.context, target, sprites, parent)
     }
 }
 

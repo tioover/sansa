@@ -2,7 +2,6 @@ use glium::{Display, Program, DrawParameters, Frame, Surface};
 use glium::uniforms::Uniforms;
 use na::Vec2;
 use mesh::Mesh;
-use camera::Camera;
 
 
 pub struct Context<'display> {
@@ -10,8 +9,8 @@ pub struct Context<'display> {
     pub hidpi_factor: f32,
     pub program: Program,
     pub params: DrawParameters<'display>,
-    pub camera: Camera<'display>,
 }
+
 
 impl<'display> Context<'display> {
     pub fn new(display: &'display Display) -> Context<'display> {
@@ -22,12 +21,7 @@ impl<'display> Context<'display> {
             hidpi_factor: hidpi_factor,
             program: program,
             params: Context::build_params(),
-            camera: Camera::new(display),
         }
-    }
-
-    pub fn update(&mut self, delta: ::timer::Ms) {
-        self.camera.update(delta)
     }
 
     #[inline]

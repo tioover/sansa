@@ -24,12 +24,16 @@ impl<'display> Camera<'display> {
     }
 
     pub fn move_(&mut self, time: Ms, offset: Vec2<f32>) {
-        self.offset = zero();
+        let current = self.offset;
         let state: State<Camera> = function!(Timer::new(time), move |camera, timer| {
-            camera.offset = linear(zero(), offset, timer.ratio());
+            camera.offset = current + linear(zero(), offset, timer.ratio());
             Return::Remain
         });
         self.state = state;
+    }
+
+    pub fn reset(&mut self) {
+        self.offset = zero();
     }
 
 

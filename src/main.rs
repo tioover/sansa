@@ -28,9 +28,9 @@ mod tile;
 
 use std::path::PathBuf;
 use na::Vec2;
-use glium::Display;
+use glium::{Display, Surface};
 use engine::{Texture, Manager, UIBuilder, Sprite, Update, Text,
-             Engine, build_display, update};
+             Engine, Camera, build_display, update};
 use engine::timer::Ms;
 use object::Block;
 use tile::{Tile, TileGen};
@@ -94,6 +94,8 @@ fn main() {
     let mut last_turn = env.now();
     let mut ground = make_tiles(&game, &tile);
     let mut offset: Vec2<i32> = na::zero();
+    let mut game_camera = Camera::new(&display);
+    let mut ui_camera = Camera::new(&display);
 
     let mut text = env.text()
             .size(18)
@@ -114,6 +116,9 @@ fn main() {
         let event = { // update
             let mut queue: Vec<&mut Update> = Vec::new();
             queue.push(&mut text);
+            let delta = env.engine.timer.delta;
+            game_camera.update(delta);
+            ui_camera.update(delta);
             update(&env.engine, queue)
         };
         if event.closed { break 'main }
@@ -132,7 +137,6 @@ fn main() {
         }
         let now = env.now();
         if now - last_turn >= turn_time {
-            let mut camera = &mut env.engine.context.camera;
             ground = make_tiles(&game, &tile);
             let output = game.next(Input::Move ((offset.x, offset.y)));
             last_turn = now;
@@ -140,7 +144,8 @@ fn main() {
                 Output::Move(offset) => {
                     let v = tile.vertical();
                     let h = tile.horizontal();
-                    camera.move_(turn_time, na::cast(match offset {
+                    game_camera.reset();
+                    game_camera.move_(turn_time, na::cast(match offset {
                         ( 0,  0) => na![ 0,  0],
                         ( 1,  1) => na![ 0,  v],
                         (-1, -1) => na![ 0, -v],
@@ -153,9 +158,11 @@ fn main() {
             offset = na::zero();
         }
         // render
-        let mut queue: Vec<_> = ground.iter().collect();
-        queue.push(&text.sprite);
-        env.engine.render_sprites(queue);
+        let mut target = display.draw();
+        target.clear_color(0.75, 0.75, 1.0, 1.0);
+        env.engine.render_sprites(&mut target, ground.iter().collect(), game_camera.matrix());
+        env.engine.render_sprites(&mut target, vec![&text.sprite], ui_camera.matrix());
+        target.finish().unwrap();
         env.update();
         println!("FPS: {}", env.engine.timer.fps());
     }
@@ -165,8 +172,8 @@ fn main() {
 fn make_tiles(game: &Game, tile: &TileGen) -> Vec<Sprite> {
     let mut sprites = Vec::new();
     for k in 0..game::LAYER {
-        for j in -10..10 {
-            for i in -10..10 {
+        for j in -20..20 {
+            for i in -20..20 {
                 let unit = game.get([i, j, k]);
                 let block = unit.block;
                 let role = unit.role;

@@ -1,6 +1,6 @@
 use na::Vec2;
 use timer::Ms;
-use ::{Engine, Context};
+use ::{Engine, Display};
 pub use glium::glutin::{MouseScrollDelta, ElementState, ScanCode,
                         VirtualKeyCode, MouseButton};
 
@@ -19,14 +19,12 @@ pub struct Event {
 
 
 impl Event {
-    pub fn new(context: &Context) -> Event {
+    pub fn new(display: &Display) -> Event {
         use glium::glutin::Event::*;
         use glium::glutin::ElementState::*;
-
-        let display = context.display;
-        let f = context.hidpi_factor;
+        let f = display.get_window().unwrap().hidpi_factor();
         let size = {
-            let (w, h) = context.display.get_framebuffer_dimensions();
+            let (w, h) = display.get_framebuffer_dimensions();
             na![w as f32, h as f32]
         };
 
@@ -79,7 +77,7 @@ pub trait Update {
 
 
 pub fn update(engine: &Engine, xs: Vec<&mut Update>) -> Box<Event> {
-    let mut event = box Event::new(&engine.context);
+    let mut event = box Event::new(&engine.display);
     let delta = engine.timer.delta;
 
     for x in xs {
