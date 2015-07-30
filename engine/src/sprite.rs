@@ -231,7 +231,7 @@ impl Renderable for Batch {
         context.draw(target, &self.mesh,
             &uniform! {
                 matrix: parent,
-                color_multiply: self.color_multiply.as_array(),
+                color_multiply: self.color_multiply,
                 tex: &self.texture.data
             }
         );

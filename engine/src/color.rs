@@ -1,4 +1,5 @@
 use glium::texture::{PixelValue, ClientFormat};
+use glium::uniforms::{AsUniformValue, UniformValue};
 use std::ops::Add;
 use std::cmp::{PartialEq, Eq};
 
@@ -32,6 +33,13 @@ impl Color {
 
     pub fn as_tuple(&self) -> (f32, f32, f32, f32) {
         (self.r, self.g, self.b, self.a)
+    }
+}
+
+
+impl AsUniformValue for Color {
+    fn as_uniform_value(&self) -> UniformValue {
+        UniformValue::Vec4(self.as_array())
     }
 }
 
