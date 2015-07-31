@@ -22,9 +22,9 @@ impl<'display> Engine<'display> {
         }
     }
 
-    pub fn text(&self, font: PathBuf) -> Text {
+    pub fn text(&self, font: PathBuf, box_size: (u32, u32)) -> Text {
         let hidpi_factor = self.display.get_window().unwrap().hidpi_factor();
-        Text::new(font, self.glyph_cache.clone())
+        Text::new(font, self.glyph_cache.clone(), box_size)
             .hidpi_factor(hidpi_factor)
     }
 

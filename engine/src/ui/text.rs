@@ -4,6 +4,7 @@ use unicode_normalization::UnicodeNormalization;
 use na::Vec2;
 use std::path::PathBuf;
 use std::collections::HashMap;
+use std::string::ToString;
 use std::rc::Rc;
 use std::cell::RefCell;
 use glium::Display;
@@ -31,7 +32,7 @@ pub struct Text {
 
 
 impl Text {
-    pub fn new(font_path: PathBuf, cache: GlyphCache) -> Text {
+    pub fn new(font_path: PathBuf, cache: GlyphCache, box_size: (u32, u32)) -> Text {
         Text {
             cache: cache,
             font: font_path,
@@ -39,7 +40,7 @@ impl Text {
             line_spacing: 4,
             color: Color::black(),
             underline: 0,
-            box_size: (0, 0),
+            box_size: box_size,
             hidpi_factor: 1.0,
             padding: 10,
             content: String::new(),
@@ -52,8 +53,8 @@ impl Text {
         draw(self)
     }
 
-    pub fn content(self, s: String) -> Text {
-        Text { content: s, ..self }
+    pub fn content<T: ToString>(self, data: T) -> Text {
+        Text { content: data.to_string(), ..self }
     }
 
     pub fn size(self, size: u16) -> Text {
@@ -191,18 +192,7 @@ pub fn draw(style: &Text) -> Canvas {
     // typesetting
     let line_spacing = scale!(style.line_spacing);
     let padding = scale!(style.padding);
-    let (width, height) =
-        if style.box_size != (0, 0) {
-            let (w, h) = style.box_size;
-            (scale!(w), scale!(h))
-        }
-        else {
-            // temporary size
-            let wrap = chars.iter().filter(|c| **c == '\n').count() as i32 + 1;
-            let w = font_size as i32 * chars.len() as i32 + padding * 4;
-            let h = font_size + padding * 4 + line_spacing * 2;
-            (w, h*wrap)
-        };
+    let (width, height) = (scale!(style.box_size.0), scale!(style.box_size.1));
 
     let mut canvas = Canvas::new(width as usize, height as usize)
             .factor(factor);
@@ -255,12 +245,6 @@ pub fn draw(style: &Text) -> Canvas {
         x += w + glyph.right;
     }
     draw_underline!();
-
-
-    // resize canvas
-    if style.box_size == (0, 0) {
-        canvas.resize((x+padding, baseline+line_spacing+padding));
-    }
     return canvas;
 }
 
