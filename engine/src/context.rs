@@ -1,53 +1,51 @@
+use std::cell::RefCell;
 use glium::{Display, Program, DrawParameters, Frame, Surface};
 use glium::uniforms::Uniforms;
-use na::Vec2;
 use mesh::Mesh;
 
 
 pub struct Context<'display> {
     pub display: &'display Display,
-    pub hidpi_factor: f32,
     pub program: Program,
     pub params: DrawParameters<'display>,
+    frame: Option<RefCell<Frame>>,
 }
 
 
 impl<'display> Context<'display> {
     pub fn new(display: &'display Display) -> Context<'display> {
-        let hidpi_factor = display.get_window().unwrap().hidpi_factor(); 
         let program = Context::build_program(display);
         Context {
             display: display,
-            hidpi_factor: hidpi_factor,
             program: program,
             params: Context::build_params(),
+            frame: None,
         }
     }
 
-    #[inline]
-    pub fn right_top(&self) -> Vec2<f32> {
-        let (width, height) = self.display.get_framebuffer_dimensions();
-        let size = Vec2::new(width as f32, height as f32);
-        size / self.hidpi_factor / 2.0
+    pub fn frame(&mut self) {
+        let target = self.display.draw();
+        self.frame = Some(RefCell::new(target));
     }
 
-    #[inline]
-    pub fn left_bottom(&self) -> Vec2<f32> {
-        -self.right_top()
+    pub fn finish(&mut self) {
+        let target = self.frame.take().unwrap().into_inner();
+        target.finish().unwrap();
     }
 
     fn build_program(display: &Display) -> Program {
         program!(display,
             140 => {
                 vertex: &include_str!("shader/140/vertex.glsl"),
-                fragment: &include_str!("shader/140/fragment.glsl"), 
+                fragment: &include_str!("shader/140/fragment.glsl"),
             },
         ).unwrap()
     }
 
-    pub fn draw<U>(&self, target: &mut Frame, mesh: &Mesh, uniforms: &U)
+    pub fn draw<U>(&self, mesh: &Mesh, uniforms: &U)
             where U: Uniforms {
-        target.draw(
+        let cell = self.frame.as_ref().unwrap();
+        cell.borrow_mut().draw(
             &mesh.vertex,
             &mesh.index,
             &self.program,

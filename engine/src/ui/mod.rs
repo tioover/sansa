@@ -21,19 +21,19 @@ pub trait UIBuilder: Clone {
 
 
 pub struct UI<B: UIBuilder> {
-    pub sprite: Sprite,
+    sprite: Sprite,
     pub builder: B,
 }
 
 impl<B: UIBuilder> UI<B> {
-    pub fn re_build(&mut self, display: &Display) {
+    pub fn rebuild(&mut self, display: &Display) {
         self.sprite = self.builder.sprite(display);
     }
 }
 
 impl<B: UIBuilder> Renderable for UI<B> {
-    fn draw(&self, ctx: &Context, target: &mut Frame, parent: Mat) {
-        self.sprite.draw(ctx, target, parent);
+    fn draw(&self, ctx: &Context, parent: Mat) {
+        self.sprite.draw(ctx, parent);
     }
 }
 

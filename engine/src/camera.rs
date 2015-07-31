@@ -36,6 +36,26 @@ impl<'display> Camera<'display> {
         self.offset = zero();
     }
 
+    pub fn right_top(&self) -> Vec2<f32> {
+        let hidpi_factor = self.display.get_window().unwrap().hidpi_factor();
+        let (width, height) = self.display.get_framebuffer_dimensions();
+        let size = na![width as f32, height as f32];
+        size / hidpi_factor / 2.0
+    }
+
+    pub fn right_bottom(&self) -> Vec2<f32> {
+        let rt = self.right_top();
+        na![rt.x, -rt.y]
+    }
+
+    pub fn left_top(&self) -> Vec2<f32> {
+        -self.right_bottom()
+    }
+
+    pub fn left_bottom(&self) -> Vec2<f32> {
+        -self.right_top()
+    }
+
 
     pub fn matrix(&self) -> Mat {
         let factor = self.display.get_window().unwrap().hidpi_factor();

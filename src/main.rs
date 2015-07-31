@@ -30,7 +30,7 @@ use std::path::PathBuf;
 use na::Vec2;
 use glium::{Display, Surface};
 use engine::{Texture, Manager, UIBuilder, Sprite, Update, Text,
-             Engine, Camera, build_display, update};
+             Engine, Camera, Renderable, build_display, update};
 use engine::timer::Ms;
 use object::Block;
 use tile::{Tile, TileGen};
@@ -101,16 +101,12 @@ fn main() {
             .size(18)
             .line_spacing(4)
             .underline(1)
+            .anchor(na![1.0, -1.0])
+            .position(ui_camera.left_top())
             .box_size((500, 100))
             .content("Answer to the Ultimate Question of Life, the Universe, and Everything".to_string())
             .build(&display);
 
-    // {
-    //     use engine::sprite::animate;
-    //     use engine::animation::State;
-    //     let state = animate::rotate(1000);
-    //     text.sprite.set_state(repeat!(state));
-    // }
 
     'main: loop {
         let event = { // update
@@ -158,11 +154,11 @@ fn main() {
             offset = na::zero();
         }
         // render
-        let mut target = display.draw();
-        target.clear_color(0.75, 0.75, 1.0, 1.0);
-        env.engine.render_sprites(&mut target, ground.iter().collect(), game_camera.matrix());
-        env.engine.render_sprites(&mut target, vec![&text.sprite], ui_camera.matrix());
-        target.finish().unwrap();
+        env.engine.context.frame();
+        ground.iter().collect::<Vec<_>>()
+            .draw(&env.engine.context, game_camera.matrix());
+        text.draw(&env.engine.context, ui_camera.matrix());
+        env.engine.context.finish();
         env.update();
         println!("FPS: {}", env.engine.timer.fps());
     }

@@ -25,6 +25,8 @@ pub struct Text {
     content: String,
     box_size: (u32, u32),
     color: Color,
+    position: Vec2<f32>,
+    anchor: Vec2<f32>,
 }
 
 
@@ -41,6 +43,8 @@ impl Text {
             hidpi_factor: 1.0,
             padding: 10,
             content: String::new(),
+            position: ::na::zero(),
+            anchor: ::na::zero(),
         }
     }
 
@@ -72,6 +76,14 @@ impl Text {
         Text { box_size: box_size, ..self }
     }
 
+    pub fn anchor(self, center: Vec2<f32>) -> Text {
+        Text { anchor: center, ..self }
+    }
+
+    pub fn position(self, position: Vec2<f32>) -> Text {
+        Text { position: position, ..self }
+    }
+
     pub fn underline(self, underline: u8) -> Text {
         Text { underline: underline, ..self }
     }
@@ -85,7 +97,9 @@ impl Text {
 impl UIBuilder for Text {
     fn sprite(&self, display: &Display) -> Sprite {
         self.draw().into_sprite(display)
-    } 
+            .position(self.position)
+            .anchor(self.anchor)
+    }
 }
 
 
@@ -217,7 +231,7 @@ pub fn draw(style: &Text) -> Canvas {
             draw_underline!();
             x = padding;
             baseline += font_size + line_spacing * 2;
-        } 
+        }
         // space
         if c == ' ' { x += glyph.left + glyph.right }
         // skip

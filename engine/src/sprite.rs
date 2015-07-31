@@ -1,5 +1,5 @@
 use std::rc::Rc;
-use glium::{Frame, Display, Surface};
+use glium::{Display, Surface};
 use na;
 use na::Vec2;
 use color::Color;
@@ -60,30 +60,25 @@ impl Sprite {
         ]
     }
 
-    #[inline]
     fn mesh(&self, display: &Display) -> Mesh {
         let vertices = Sprite::vertices(self.size, &self.transform, &self.image);
         Mesh::rectangle(display, vertices)
     }
 
-    #[inline]
     pub fn transform(self, transform: Transform) -> Sprite {
         Sprite { transform: transform, ..self }
     }
 
-    #[inline]
     pub fn anchor(self, center: Vec2<f32>) -> Sprite {
-        let transform = self.transform.offset(-self.size * center);
+        let transform = self.transform.offset(self.size * center / 2.0);
         Sprite { transform: transform, ..self }
     }
 
-    #[inline]
     pub fn position(self, position: Vec2<f32>) -> Sprite {
         let transform = self.transform.position(position);
         Sprite { transform: transform, ..self }
     }
 
-    #[inline]
     pub fn state(self, state: State<Sprite>) -> Sprite {
         Sprite { state: state, ..self }
     }
@@ -167,8 +162,8 @@ pub mod animate {
 
 
 impl Renderable for Sprite {
-    fn draw(&self, context: &Context, target: &mut Frame, parent: Mat) {
-        context.draw(target, &self.mesh(&context.display),
+    fn draw(&self, context: &Context, parent: Mat) {
+        context.draw(&self.mesh(&context.display),
             &uniform! {
                 matrix: parent,
                 color_multiply: self.color_multiply.as_array(),
@@ -227,8 +222,8 @@ impl Batch {
 
 
 impl Renderable for Batch {
-    fn draw(&self, context: &Context, target: &mut Frame, parent: Mat) {
-        context.draw(target, &self.mesh,
+    fn draw(&self, context: &Context, parent: Mat) {
+        context.draw(&self.mesh,
             &uniform! {
                 matrix: parent,
                 color_multiply: self.color_multiply,
@@ -239,23 +234,24 @@ impl Renderable for Batch {
 }
 
 
-pub fn render(context: &Context, target: &mut Frame, sprites: Vec<&Sprite>, parent: Mat) {
-    let len = sprites.len();
-    let mut head = 0;
+impl<'a> Renderable for Vec<&'a Sprite> {
+    fn draw(&self, context: &Context, parent: Mat) {
+        let len = self.len();
+        let mut head = 0;
 
 
-    for i in 1..len+1 {
-        if i == len || !sprites[head].similar(sprites[i]) {
-            if i-head == 1 {
-                sprites[head].draw(context, target, parent);
+        for i in 1..len+1 {
+            if i == len || !self[head].similar(self[i]) {
+                if i-head == 1 {
+                    self[head].draw(context, parent);
+                }
+                else {
+                    Batch::new(context.display, &self[head..i])
+                        .draw(context, parent);
+                }
+                head = i;
             }
-            else {
-                Batch::new(context.display, &sprites[head..i])
-                    .draw(context, target, parent);
-            }
-            head = i;
         }
     }
 }
-
 
