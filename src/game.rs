@@ -34,7 +34,7 @@ impl Game {
     #[inline]
     pub fn get(&self, i: [i32; 3]) -> Unit {
         let [x, y, z] = i;
-        let position = self.player.position; 
+        let position = self.player.position;
         Unit {
             block: self.map.get([x+position.x, y+position.y, z]),
             role: if [x, y, z] == [0, 0, position.z] {

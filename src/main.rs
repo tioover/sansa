@@ -73,8 +73,8 @@ impl<'a> Env<'a> {
     }
 
     #[inline]
-    fn text(&self) -> Text {
-        self.engine.text(self.font.clone())
+    fn text(&self, box_size: (u32, u32)) -> Text {
+        self.engine.text(self.font.clone(), box_size)
     }
 
     #[inline]
@@ -97,14 +97,13 @@ fn main() {
     let mut game_camera = Camera::new(&display);
     let mut ui_camera = Camera::new(&display);
 
-    let mut text = env.text()
+    let mut text = env.text((500, 100))
             .size(18)
             .line_spacing(4)
             .underline(1)
-            .anchor(na![1.0, -1.0])
-            .position(ui_camera.left_top())
-            .box_size((500, 100))
-            .content("Answer to the Ultimate Question of Life, the Universe, and Everything".to_string())
+            .anchor(na![-1.0, -1.0])
+            .position(ui_camera.right_top())
+            .content("Answer to the Ultimate Question of Life, the Universe, and Everything")
             .build(&display);
 
 
@@ -117,6 +116,13 @@ fn main() {
             ui_camera.update(delta);
             update(&env.engine, queue)
         };
+        let fps = env.text((50, 50))
+                .size(18)
+                .line_spacing(4)
+                .anchor(na![1.0, -1.0])
+                .position(ui_camera.left_top())
+                .content(env.engine.timer.fps())
+                .build(&display);
         if event.closed { break 'main }
         for e in event.key_press.iter() {
             use engine::event::VirtualKeyCode::*;
@@ -127,6 +133,10 @@ fn main() {
                     S => na![-1, -1],
                     A => na![-1,  1],
                     D => na![ 1, -1],
+                    Q => na![ 0,  1],
+                    E => na![ 1,  0],
+                    Z => na![-1,  0],
+                    X => na![ 0, -1],
                     _ => na![ 0,  0],
                 }
             }
@@ -147,6 +157,10 @@ fn main() {
                         (-1, -1) => na![ 0, -v],
                         (-1,  1) => na![-h,  0],
                         ( 1, -1) => na![ h,  0],
+                        ( 0,  1) => na![-h/2,  v/2],
+                        ( 1,  0) => na![ h/2,  v/2],
+                        (-1,  0) => na![-h/2, -v/2],
+                        ( 0, -1) => na![ h/2, -v/2],
                         _ => unreachable!()
                     }));
                 }
@@ -158,9 +172,9 @@ fn main() {
         ground.iter().collect::<Vec<_>>()
             .draw(&env.engine.context, game_camera.matrix());
         text.draw(&env.engine.context, ui_camera.matrix());
+        fps.draw(&env.engine.context, ui_camera.matrix());
         env.engine.context.finish();
         env.update();
-        println!("FPS: {}", env.engine.timer.fps());
     }
 }
 
