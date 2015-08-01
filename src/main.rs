@@ -87,9 +87,10 @@ impl<'a> Env<'a> {
 fn main() {
     let turn_time = 250;
     let display = build_display("sansa".to_string(), (800, 600));
+
     let mut env = Env::new(&display);
 
-    let mut game = game::Game::new((1000, 1000));
+    let mut game = game::Game::new((100, 100));
     let tile = TileGen::new(&env.textures);
     let mut last_turn = env.now();
     let mut ground = make_tiles(&game, &tile);
@@ -105,6 +106,7 @@ fn main() {
             .position(ui_camera.right_top())
             .content("Answer to the Ultimate Question of Life, the Universe, and Everything")
             .build(&display);
+
 
 
     'main: loop {

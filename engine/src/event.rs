@@ -1,88 +1,51 @@
 use na::Vec2;
+use glium::Display;
+use glium::glutin;
 use timer::Ms;
-use ::{Engine, Display};
-pub use glium::glutin::{MouseScrollDelta, ElementState, ScanCode,
-                        VirtualKeyCode, MouseButton};
+use engine::Engine;
 
 
-#[derive(Debug)]
-pub struct Event {
-    pub mouse: Vec2<f32>,
-    pub mouse_press: Option<MouseButton>,
-    pub mouse_release: Option<MouseButton>,
-    pub scroll: Option<MouseScrollDelta>,
-    pub key_press: Vec<(ScanCode, Option<VirtualKeyCode>)>,
-    pub key_release: Vec<(ScanCode, Option<VirtualKeyCode>)>,
-    pub string: String,
-    pub closed: bool,
+pub enum Event {
+    WindowEvent (glutin::Event),
+    Message (String),
 }
 
 
-impl Event {
-    pub fn new(display: &Display) -> Event {
-        use glium::glutin::Event::*;
+pub struct EventStream (Vec<Event>);
+
+
+impl EventStream {
+    pub fn new(display: &Display) -> EventStream {
+        use glium::glutin::Event::MouseMoved;
         use glium::glutin::ElementState::*;
         let f = display.get_window().unwrap().hidpi_factor();
-        let size = {
-            let (w, h) = display.get_framebuffer_dimensions();
-            na![w as f32, h as f32]
-        };
+        let (w, h) = display.get_framebuffer_dimensions();
+        let (w, h) = (w as f32, h as f32);
 
-        let mut string = String::new();
-        let mut mouse_position = na![0.0, 0.0];
-        let mut mouse_press = None;
-        let mut mouse_release = None;
-        let mut scroll = None;
-        let mut key_press = Vec::new();
-        let mut key_release = Vec::new();
-        let mut closed = false;
-        for event in display.poll_events() {
-            match event {
-                MouseMoved ((x, y)) => {
-                    let position = na![x as f32, y as f32];
-                    let mut a = (position - size/2.0) / f;
-                    a.y = -a.y;
-                    mouse_position = a;
-                }
-                MouseWheel (x) => scroll = Some (x),
-                MouseInput (Released, x) => mouse_release = Some (x),
-                MouseInput (Pressed, x) => mouse_press = Some (x),
-                KeyboardInput (Released, x, y) => key_release.push((x, y)),
-                KeyboardInput (Pressed, x, y) => key_press.push((x, y)),
-                ReceivedCharacter (c) => string.push(c),
-                Closed => closed = true,
-                _ => {}
+        let events: Vec<_> = display.poll_events().map(|event| match event {
+            MouseMoved ((x, y)) => {
+                let (x, y) = (x as f32, y as f32);
+                MouseMoved((((x - w/2.0)/f) as i32, (-(y - h/2.0)/f)) as i32)
             }
-        }
-
-        Event {
-            mouse: mouse_position,
-            mouse_press: mouse_press,
-            mouse_release: mouse_release,
-            scroll: scroll,
-            key_press: key_press,
-            key_release: key_release,
-            string: string,
-            closed: closed,
-        }
+            x => x
+        }).collect();
+        EventStream (events)
     }
 }
 
 
 pub trait Update {
-    fn update(&mut self, delta: Ms, event: Box<Event>) -> Box<Event>;
+    fn update(&mut self, delta: Ms, stream: EventStream) -> EventStream;
 }
 
 
 
-
-pub fn update(engine: &Engine, xs: Vec<&mut Update>) -> Box<Event> {
-    let mut event = box Event::new(&engine.display);
-    let delta = engine.timer.delta;
-
-    for x in xs {
-        event = x.update(delta, event);
+impl<'a> Update for Vec<&'a mut Update> {
+    fn update(&mut self, delta: Ms, mut stream: EventStream) -> EventStream {
+        for item in self {
+            stream = item.update(delta, stream);
+        }
+        return stream;
     }
-    return event;
 }
 
