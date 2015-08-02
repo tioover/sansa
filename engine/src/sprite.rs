@@ -8,7 +8,7 @@ use renderable::Renderable;
 use ::Context;
 use texture::Texture;
 use mesh::{Mesh, Vertex};
-use event::{Update, Event};
+use event::{Update, EventStream};
 use transform::Transform;
 use math::Mat;
 use timer::Ms;
@@ -97,10 +97,10 @@ impl Sprite {
 
 
 impl Update for Sprite {
-    fn update(&mut self, delta: Ms, event: Box<Event>)
-            -> Box<Event> {
+    fn update(&mut self, delta: Ms, stream: EventStream)
+            -> EventStream {
         self::animate::next(self, delta);
-        return event;
+        return stream;
     }
 }
 

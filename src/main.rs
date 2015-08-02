@@ -30,7 +30,8 @@ use std::path::PathBuf;
 use na::Vec2;
 use glium::{Display, Surface};
 use engine::{Texture, Manager, UIBuilder, Sprite, Update, Text,
-             Engine, Camera, Renderable, build_display, update};
+             Engine, Camera, Renderable, EventStream, Event, WindowEvent,
+             build_display};
 use engine::timer::Ms;
 use object::Block;
 use tile::{Tile, TileGen};
@@ -110,13 +111,14 @@ fn main() {
 
 
     'main: loop {
-        let event = { // update
+        let stream = { // update
+            let stream = EventStream::new(&display);
             let mut queue: Vec<&mut Update> = Vec::new();
             queue.push(&mut text);
             let delta = env.engine.timer.delta;
             game_camera.update(delta);
             ui_camera.update(delta);
-            update(&env.engine, queue)
+            queue.update(delta, stream)
         };
         let fps = env.text((50, 50))
                 .size(18)
@@ -125,21 +127,28 @@ fn main() {
                 .position(ui_camera.left_top())
                 .content(env.engine.timer.fps())
                 .build(&display);
-        if event.closed { break 'main }
-        for e in event.key_press.iter() {
-            use engine::event::VirtualKeyCode::*;
+        for e in stream.iter() {
+            use glium::glutin::ElementState;
 
-            if let &(_, Some (x)) = e {
-                offset = match x {
-                    W => na![ 1,  1],
-                    S => na![-1, -1],
-                    A => na![-1,  1],
-                    D => na![ 1, -1],
-                    Q => na![ 0,  1],
-                    E => na![ 1,  0],
-                    Z => na![-1,  0],
-                    X => na![ 0, -1],
-                    _ => na![ 0,  0],
+            if let &Event::Window(ref e) = e {
+                match e {
+                    &WindowEvent::Closed => break 'main,
+                    &WindowEvent::KeyboardInput(ElementState::Released, _, Some(x)) => {
+                        use glium::glutin::VirtualKeyCode::*;
+
+                        offset = match x {
+                            W => na![ 1,  1],
+                            S => na![-1, -1],
+                            A => na![-1,  1],
+                            D => na![ 1, -1],
+                            Q => na![ 0,  1],
+                            E => na![ 1,  0],
+                            Z => na![-1,  0],
+                            X => na![ 0, -1],
+                            _ => na![ 0,  0],
+                        }
+                    }
+                    _ => {}
                 }
             }
         }

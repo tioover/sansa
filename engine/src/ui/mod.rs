@@ -1,7 +1,7 @@
 use glium::Display;
 use sprite::Sprite;
 use renderable::*;
-use event::{Update, Event};
+use event::{Update, EventStream};
 use timer::Ms;
 
 pub mod text;
@@ -39,7 +39,7 @@ impl<B: UIBuilder> Renderable for UI<B> {
 
 
 impl<B: UIBuilder> Update for UI<B> {
-    fn update(&mut self, delta: Ms, event: Box<Event>) -> Box<Event> {
-        self.sprite.update(delta, event)
+    fn update(&mut self, delta: Ms, stream: EventStream) -> EventStream {
+        self.sprite.update(delta, stream)
     }
 }
