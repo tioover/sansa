@@ -97,9 +97,13 @@ impl Sprite {
 
 
 impl Update for Sprite {
-    fn update(&mut self, delta: Ms, stream: EventStream)
-            -> EventStream {
-        self::animate::next(self, delta);
+    fn update(&mut self, delta: Ms, stream: EventStream) -> EventStream {
+        use animation::Return;
+
+        let mut state = self.state.clone();
+        if let Return::Become(x) = state.transition(self, delta) {
+            self.state = x;
+        }
         return stream;
     }
 }
@@ -111,8 +115,6 @@ pub mod animate {
     use sprite::Sprite;
     use animation::State;
     use timer::{Ms, Timer};
-
-    state_next_fn! { Sprite }
 
     pub fn rotate(total: Ms) -> State<Sprite> {
         function!(Timer::new(total), move |sprite, timer| {

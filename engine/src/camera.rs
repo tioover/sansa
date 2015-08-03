@@ -66,9 +66,9 @@ impl<'display> Camera<'display> {
     }
 
     pub fn update(&mut self, delta: Ms) {
-        next(self, delta)
+        let mut state = self.state.clone();
+        if let  Return::Become(x) = state.transition(self, delta) {
+            self.state = x;
+        }
     }
 }
-
-
-state_next_fn! { Camera }

@@ -81,12 +81,12 @@ macro_rules! if_out {
 
 
 impl<T> State<T> {
-    pub fn next(&mut self, data: &mut T, delta: Ms) -> Return<T> {
+    pub fn transition(&mut self, data: &mut T, delta: Ms) -> Return<T> {
         use self::State::*;
 
         macro_rules! next (
             ($s: expr) => (
-                if let Return::Become(x) = $s.next(data, delta) {
+                if let Return::Become(x) = $s.transition(data, delta) {
                     $s = x;
                 }
             )
@@ -135,20 +135,4 @@ impl<T> State<T> {
         Return::Remain
     }
 }
-
-
-macro_rules! state_next_fn (
-    ($T: ty) => (
-        pub fn next(x: &mut $T, delta: ::timer::Ms) {
-            use std::mem::swap;
-            let mut state = ::animation::State::Nil;
-            swap(&mut state, &mut x.state);
-            let new_state = state.next(x, delta);
-            x.state = match new_state {
-                $crate::animation::Return::Become (new) => new,
-                $crate::animation::Return::Remain => state,
-            }
-        }
-    )
-);
 
