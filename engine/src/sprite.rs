@@ -21,7 +21,7 @@ pub struct Sprite {
     pub size: Vec2<f32>,
     pub transform: Transform,
     pub color_multiply: Color,
-    pub state: State<Sprite>,
+    state: State<Sprite>,
 }
 
 
@@ -98,12 +98,15 @@ impl Sprite {
 
 impl Update for Sprite {
     fn update(&mut self, delta: Ms, stream: EventStream) -> EventStream {
+        use std::mem::swap;
         use animation::Return;
 
-        let mut state = self.state.clone();
+        let mut state = State::Nil;
+        swap(&mut self.state, &mut state);
         if let Return::Become(x) = state.transition(self, delta) {
-            self.state = x;
+            state = x;
         }
+        self.state = state;
         return stream;
     }
 }

@@ -66,9 +66,14 @@ impl<'display> Camera<'display> {
     }
 
     pub fn update(&mut self, delta: Ms) {
-        let mut state = self.state.clone();
-        if let  Return::Become(x) = state.transition(self, delta) {
-            self.state = x;
+        use std::mem::swap;
+        use animation::Return;
+
+        let mut state = State::Nil;
+        swap(&mut self.state, &mut state);
+        if let Return::Become(x) = state.transition(self, delta) {
+            state = x;
         }
+        self.state = state;
     }
 }
