@@ -29,7 +29,7 @@ mod tile;
 use std::path::PathBuf;
 use na::Vec2;
 use glium::{Display, Surface};
-use engine::{Texture, Manager, UIBuilder, Sprite, Update, Label,
+use engine::{Texture, Manager, WidgetBuilder, Sprite, Update, Label,
              Engine, Camera, Renderable, EventStream, Event, WindowEvent,
              build_display};
 use engine::timer::Ms;

@@ -11,7 +11,7 @@ use glium::Display;
 use sprite::Sprite;
 use color::Color;
 use canvas::Canvas;
-use ui::UIBuilder;
+use ui::WidgetBuilder;
 
 
 #[derive(Clone)]
@@ -95,7 +95,7 @@ impl Label {
 }
 
 
-impl UIBuilder for Label {
+impl WidgetBuilder for Label {
     fn sprite(&self, display: &Display) -> Sprite {
         self.draw().into_sprite(display)
             .position(self.position)
