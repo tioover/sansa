@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 use glium::Display;
-use ui::{GlyphCache, Text};
+use ui::{GlyphCache, Label};
 use context::Context;
 use timer::ProgramTimer;
 
@@ -22,9 +22,9 @@ impl<'display> Engine<'display> {
         }
     }
 
-    pub fn text(&self, font: PathBuf, box_size: (u32, u32)) -> Text {
+    pub fn label(&self, font: PathBuf, box_size: (u32, u32)) -> Label {
         let hidpi_factor = self.display.get_window().unwrap().hidpi_factor();
-        Text::new(font, self.glyph_cache.clone(), box_size)
+        Label::new(font, self.glyph_cache.clone(), box_size)
             .hidpi_factor(hidpi_factor)
     }
 

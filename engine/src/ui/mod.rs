@@ -6,7 +6,7 @@ use timer::Ms;
 
 pub mod text;
 
-pub use self::text::{Text, GlyphCache, Glyph};
+pub use self::text::{Label, GlyphCache, Glyph};
 
 
 pub trait UIBuilder: Clone {

@@ -29,7 +29,7 @@ mod tile;
 use std::path::PathBuf;
 use na::Vec2;
 use glium::{Display, Surface};
-use engine::{Texture, Manager, UIBuilder, Sprite, Update, Text,
+use engine::{Texture, Manager, UIBuilder, Sprite, Update, Label,
              Engine, Camera, Renderable, EventStream, Event, WindowEvent,
              build_display};
 use engine::timer::Ms;
@@ -74,8 +74,8 @@ impl<'a> Env<'a> {
     }
 
     #[inline]
-    fn text(&self, box_size: (u32, u32)) -> Text {
-        self.engine.text(self.font.clone(), box_size)
+    fn label(&self, box_size: (u32, u32)) -> Label {
+        self.engine.label(self.font.clone(), box_size)
     }
 
     #[inline]
@@ -99,7 +99,7 @@ fn main() {
     let mut game_camera = Camera::new(&display);
     let mut ui_camera = Camera::new(&display);
 
-    let mut text = env.text((500, 100))
+    let mut label = env.label((500, 100))
             .size(18)
             .line_spacing(4)
             .underline(1)
@@ -114,13 +114,13 @@ fn main() {
         let stream = { // update
             let stream = EventStream::new(&display);
             let mut queue: Vec<&mut Update> = Vec::new();
-            queue.push(&mut text);
+            queue.push(&mut label);
             let delta = env.engine.timer.delta;
             game_camera.update(delta);
             ui_camera.update(delta);
             queue.update(delta, stream)
         };
-        let fps = env.text((50, 50))
+        let fps = env.label((50, 50))
                 .size(18)
                 .line_spacing(4)
                 .anchor(na![1.0, -1.0])
@@ -182,7 +182,7 @@ fn main() {
         env.engine.context.frame();
         ground.iter().collect::<Vec<_>>()
             .draw(&env.engine.context, game_camera.matrix());
-        text.draw(&env.engine.context, ui_camera.matrix());
+        label.draw(&env.engine.context, ui_camera.matrix());
         fps.draw(&env.engine.context, ui_camera.matrix());
         env.engine.context.finish();
         env.update();

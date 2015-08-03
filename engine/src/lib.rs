@@ -49,7 +49,7 @@ pub use image::Image;
 pub use renderable::{Renderable, render};
 pub use sprite::Sprite;
 pub use event::{Event, WindowEvent, EventStream, Update};
-pub use ui::{GlyphCache, Glyph, Text, UI, UIBuilder};
+pub use ui::{GlyphCache, Glyph, Label, UI, UIBuilder};
 pub use resources::Manager;
 pub use transform::Transform;
 pub use texture::Texture;

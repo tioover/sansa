@@ -15,7 +15,7 @@ use ui::UIBuilder;
 
 
 #[derive(Clone)]
-pub struct Text {
+pub struct Label {
     underline: u8,
     size: u16,
     line_spacing: u16,
@@ -31,9 +31,9 @@ pub struct Text {
 }
 
 
-impl Text {
-    pub fn new(font_path: PathBuf, cache: GlyphCache, box_size: (u32, u32)) -> Text {
-        Text {
+impl Label {
+    pub fn new(font_path: PathBuf, cache: GlyphCache, box_size: (u32, u32)) -> Label {
+        Label {
             cache: cache,
             font: font_path,
             size: 18,
@@ -53,49 +53,49 @@ impl Text {
         draw(self)
     }
 
-    pub fn content<T: ToString>(self, data: T) -> Text {
-        Text { content: data.to_string(), ..self }
+    pub fn content<T: ToString>(self, data: T) -> Label {
+        Label { content: data.to_string(), ..self }
     }
 
-    pub fn size(self, size: u16) -> Text {
-        Text { size: size, ..self }
+    pub fn size(self, size: u16) -> Label {
+        Label { size: size, ..self }
     }
 
-    pub fn line_spacing(self, v: u16) -> Text {
-        Text { line_spacing: v, ..self }
+    pub fn line_spacing(self, v: u16) -> Label {
+        Label { line_spacing: v, ..self }
     }
 
-    pub fn padding(self, padding: i32) -> Text {
-        Text { padding: padding, ..self }
+    pub fn padding(self, padding: i32) -> Label {
+        Label { padding: padding, ..self }
     }
 
-    pub fn hidpi_factor(self, f: f32) -> Text {
-        Text { hidpi_factor: f, ..self }
+    pub fn hidpi_factor(self, f: f32) -> Label {
+        Label { hidpi_factor: f, ..self }
     }
 
-    pub fn box_size(self, box_size: (u32, u32)) -> Text {
-        Text { box_size: box_size, ..self }
+    pub fn box_size(self, box_size: (u32, u32)) -> Label {
+        Label { box_size: box_size, ..self }
     }
 
-    pub fn anchor(self, center: Vec2<f32>) -> Text {
-        Text { anchor: center, ..self }
+    pub fn anchor(self, center: Vec2<f32>) -> Label {
+        Label { anchor: center, ..self }
     }
 
-    pub fn position(self, position: Vec2<f32>) -> Text {
-        Text { position: position, ..self }
+    pub fn position(self, position: Vec2<f32>) -> Label {
+        Label { position: position, ..self }
     }
 
-    pub fn underline(self, underline: u8) -> Text {
-        Text { underline: underline, ..self }
+    pub fn underline(self, underline: u8) -> Label {
+        Label { underline: underline, ..self }
     }
 
-    pub fn color(self, color: Color) -> Text {
-        Text { color: color, ..self }
+    pub fn color(self, color: Color) -> Label {
+        Label { color: color, ..self }
     }
 }
 
 
-impl UIBuilder for Text {
+impl UIBuilder for Label {
     fn sprite(&self, display: &Display) -> Sprite {
         self.draw().into_sprite(display)
             .position(self.position)
@@ -157,7 +157,7 @@ impl Glyph {
     }
 }
 
-pub fn draw(style: &Text) -> Canvas {
+pub fn draw(style: &Label) -> Canvas {
     let library = Library::init().unwrap();
     let face = library.new_face(&style.font, 0).unwrap();
     let mut cache = style.cache.map.borrow_mut();
