@@ -3,7 +3,7 @@
 extern crate glium;
 extern crate image;
 extern crate num;
-extern crate nalgebra as na;
+extern crate nalgebra;
 extern crate rand;
 extern crate noise;
 extern crate uuid;
@@ -11,21 +11,11 @@ extern crate time;
 #[macro_use]
 extern crate engine;
 
-macro_rules! na {
-    ($x: expr) =>
-        (::na::Vec1::new($x));
-    ($x: expr, $y: expr) =>
-        (::na::Vec2::new($x, $y));
-    ($x: expr, $y: expr, $z: expr) =>
-        (::na::Vec3::new($x, $y, $z));
-    ($x: expr, $y: expr, $z: expr, $w: expr) =>
-        (::na::Vec4::new($x, $y, $z, $w));
-}
-
 mod object;
 mod game;
 mod tile;
 
+pub use nalgebra as na;
 use std::path::PathBuf;
 use na::Vec2;
 use glium::{Display, Surface};
@@ -105,7 +95,7 @@ fn main() {
             .underline(1)
             .anchor(na![-1.0, -1.0])
             .position(ui_camera.right_top())
-            .content("Answer to the Ultimate Question of Life, the Universe, and Everything")
+            .content("Answer to the Ultimate Question of Life\n, the Universe, and Everything")
             .build(&display);
 
 

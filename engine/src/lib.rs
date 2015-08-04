@@ -3,22 +3,23 @@
 extern crate glium;
 extern crate image as img;
 extern crate num;
-extern crate nalgebra as na;
+extern crate nalgebra;
 extern crate time;
 extern crate uuid;
 extern crate freetype;
 extern crate unicode_normalization;
 
 
+#[macro_export]
 macro_rules! na {
     ($x: expr) =>
-        (::na::Vec1::new($x));
+        ($crate::na::Vec1::new($x));
     ($x: expr, $y: expr) =>
-        (::na::Vec2::new($x, $y));
+        ($crate::na::Vec2::new($x, $y));
     ($x: expr, $y: expr, $z: expr) =>
-        (::na::Vec3::new($x, $y, $z));
+        ($crate::na::Vec3::new($x, $y, $z));
     ($x: expr, $y: expr, $z: expr, $w: expr) =>
-        (::na::Vec4::new($x, $y, $z, $w));
+        ($crate::na::Vec4::new($x, $y, $z, $w));
 }
 
 
@@ -42,6 +43,7 @@ mod texture;
 mod engine;
 
 
+pub use nalgebra as na;
 pub use glium::{Frame, Display};
 pub use timer::{ProgramTimer, Timer, Ms};
 pub use context::Context;

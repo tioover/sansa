@@ -141,8 +141,8 @@ impl Glyph {
         let a = ft_bitmap.width();
         let b = ft_bitmap.rows();
         let advance = ft_glyph.advance();
-        let w = (advance.x as i32) / 64;
-        let h = (advance.y as i32) / 64;
+        let w = (advance.x >> 6) as i32;
+        let h = (advance.y >> 6) as i32;
         let left = ft_glyph.bitmap_left();
         let right = w - left - a;
 
