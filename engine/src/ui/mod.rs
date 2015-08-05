@@ -6,7 +6,7 @@ use timer::Ms;
 
 pub mod text;
 
-pub use self::text::{Label, GlyphCache, Glyph};
+pub use self::text::Label;
 
 
 pub trait WidgetBuilder: Clone {

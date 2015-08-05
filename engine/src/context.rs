@@ -24,7 +24,8 @@ impl<'display> Context<'display> {
     }
 
     pub fn frame(&mut self) {
-        let target = self.display.draw();
+        let mut target = self.display.draw();
+        target.clear_color(0.0, 0.0, 0.0, 1.0);
         self.frame = Some(RefCell::new(target));
     }
 
