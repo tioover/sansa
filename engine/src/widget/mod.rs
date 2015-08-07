@@ -4,30 +4,30 @@ use renderable::*;
 use event::{Update, EventStream};
 use timer::Ms;
 
-pub mod text;
+pub mod label;
 
-pub use self::text::{Label, GlyphCache, Glyph};
+pub use self::label::Label;
 
 
 pub trait WidgetBuilder: Clone {
     fn sprite(&self, &Display) -> Sprite;
     fn build(self, display: &Display) -> Widget<Self> {
         Widget {
-            sprite: self.sprite(display),
-            builder: self,
+            sprite: box self.sprite(display),
+            builder: box self,
         }
     }
 }
 
 
 pub struct Widget<B: WidgetBuilder> {
-    sprite: Sprite,
-    pub builder: B,
+    sprite: Box<Sprite>,
+    pub builder: Box<B>,
 }
 
 impl<B: WidgetBuilder> Widget<B> {
     pub fn rebuild(&mut self, display: &Display) {
-        self.sprite = self.builder.sprite(display);
+        self.sprite = box self.builder.sprite(display);
     }
 }
 

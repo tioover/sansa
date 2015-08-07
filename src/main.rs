@@ -64,11 +64,6 @@ impl<'a> Env<'a> {
     }
 
     #[inline]
-    fn label(&self, box_size: (u32, u32)) -> Label {
-        self.engine.label(self.font.clone(), box_size)
-    }
-
-    #[inline]
     fn now(&self) -> Ms {
         self.engine.timer.now()
     }
@@ -89,15 +84,12 @@ fn main() {
     let mut game_camera = Camera::new(&display);
     let mut ui_camera = Camera::new(&display);
 
-    let mut label = env.label((500, 100))
-            .size(18)
-            .line_spacing(4)
-            .underline(1)
+    let text_style = engine::text::TextStyle::new(env.font.clone());
+    let fps_style = engine::text::TextStyle::new(env.font.clone());
+    let mut label = env.engine.label(text_style, "你们有一个好，全世界跑到什么地方，你们比其他的西方记者啊跑得还快。\n但是呢问来问去的问题啊，too simple，啊，sometimes naïve！")
             .anchor(na![-1.0, -1.0])
             .position(ui_camera.right_top())
-            .content("Answer to the Ultimate Question of Life\n, the Universe, and Everything")
             .build(&display);
-
 
 
     'main: loop {
@@ -110,13 +102,11 @@ fn main() {
             ui_camera.update(delta);
             queue.update(delta, stream)
         };
-        let fps = env.label((50, 50))
-                .size(18)
-                .line_spacing(4)
+        let fps = env.engine.label(fps_style.clone(), env.engine.timer.fps())
                 .anchor(na![1.0, -1.0])
                 .position(ui_camera.left_top())
-                .content(env.engine.timer.fps())
                 .build(&display);
+
         for e in stream.iter() {
             use glium::glutin::ElementState;
 

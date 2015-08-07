@@ -86,12 +86,9 @@ pub type Pos = (i32, i32);
 impl Index<Pos> for Canvas {
     type Output = Color;
 
-    #[inline]
     fn index<'a>(&'a self, (x, y): Pos) -> &'a Color {
-        let height = self.height as usize;
-        let x = x as usize;
-        let y = height - y as usize - 1;
-        let index = y * height + x;
+        let y = self.height - y - 1;
+        let index = (y * self.width + x) as usize;
 
         if index < self.buffer.len() {
             &self.buffer[index]
@@ -104,13 +101,9 @@ impl Index<Pos> for Canvas {
 
 
 impl IndexMut<Pos> for Canvas {
-    #[inline]
     fn index_mut<'a>(&'a mut self, (x, y): Pos) -> &'a mut Color {
-        let height = self.height as usize;
-        let width  = self.width  as usize;
-        let x = x as usize;
-        let y = height - y as usize - 1;
-        let index = y * width + x;
+        let y = self.height - y - 1;
+        let index = (y * self.width + x) as usize;
 
         if index < self.buffer.len() {
             &mut self.buffer[index]
