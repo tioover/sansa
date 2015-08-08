@@ -54,16 +54,6 @@ impl Canvas {
         Canvas { hidpi_factor: f, ..self }
     }
 
-    pub fn rect(&mut self, a: Vec2<i32>, b: Vec2<i32>, color: Color) {
-        let d = b - a;
-        for y in 0..d.y {
-            for x in 0..d.x {
-                let i = (a.x+x, a.y+y);
-                self[i] = self[i] + color;
-            }
-        }
-    }
-
     pub fn into_sprite(self, display: &Display) -> Sprite {
         let size = Vec2::new(self.width as i32, self.height as i32);
         let texture = Texture::new(display, RawImage2d {

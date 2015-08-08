@@ -7,6 +7,7 @@ extern crate nalgebra;
 extern crate time;
 extern crate uuid;
 extern crate freetype;
+extern crate threadpool;
 extern crate unicode_normalization;
 
 

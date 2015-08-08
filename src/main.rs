@@ -8,6 +8,7 @@ extern crate rand;
 extern crate noise;
 extern crate uuid;
 extern crate time;
+extern crate threadpool;
 #[macro_use]
 extern crate engine;
 
@@ -17,6 +18,7 @@ mod tile;
 
 pub use nalgebra as na;
 use std::path::PathBuf;
+use threadpool::ThreadPool;
 use na::Vec2;
 use glium::{Display, Surface};
 use engine::{Texture, Manager, WidgetBuilder, Sprite, Update, Label,
@@ -73,6 +75,7 @@ impl<'a> Env<'a> {
 fn main() {
     let turn_time = 250;
     let display = build_display("sansa".to_string(), (800, 600));
+    let pool = ThreadPool::new(8);
 
     let mut env = Env::new(&display);
 
@@ -89,7 +92,7 @@ fn main() {
     let mut label = env.engine.label(text_style, "你们有一个好，全世界跑到什么地方，你们比其他的西方记者啊跑得还快。\n但是呢问来问去的问题啊，too simple，啊，sometimes naïve！")
             .anchor(na![-1.0, -1.0])
             .position(ui_camera.right_top())
-            .build(&display);
+            .build(&pool);
 
 
     'main: loop {
@@ -102,17 +105,17 @@ fn main() {
             ui_camera.update(delta);
             queue.update(delta, stream)
         };
-        let fps = env.engine.label(fps_style.clone(), env.engine.timer.fps())
+        let fps = format!("FPS: {}", env.engine.timer.fps());
+        let test: Vec<_> = (0..10).map(|_| env.engine.label(fps_style.clone(), fps.clone())
                 .anchor(na![1.0, -1.0])
                 .position(ui_camera.left_top())
-                .build(&display);
-
+                .build(&pool)
+            ).collect();
         for e in stream.iter() {
             use glium::glutin::ElementState;
 
             if let &Event::Window(ref e) = e {
                 match e {
-                    &WindowEvent::Closed => break 'main,
                     &WindowEvent::KeyboardInput(ElementState::Released, _, Some(x)) => {
                         use glium::glutin::VirtualKeyCode::*;
 
@@ -163,9 +166,17 @@ fn main() {
         ground.iter().collect::<Vec<_>>()
             .draw(&env.engine.context, game_camera.matrix());
         label.draw(&env.engine.context, ui_camera.matrix());
-        fps.draw(&env.engine.context, ui_camera.matrix());
+        for x in &test {
+            x.draw(&env.engine.context, ui_camera.matrix());
+        }
         env.engine.context.finish();
         env.update();
+        for e in stream.iter() {
+            match e {
+                &Event::Window(WindowEvent::Closed) => break 'main,
+                _ => {}
+            }
+        }
     }
 }
 

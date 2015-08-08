@@ -14,6 +14,7 @@ time = "*"
 image = "*"
 nalgebra = "*"
 uuid = "*"
+threadpool = "*"
 
 [dependencies.engine]
 path = "engine"

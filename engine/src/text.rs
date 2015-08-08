@@ -1,6 +1,5 @@
 use std::path::PathBuf;
-use std::collections::HashMap;
-use std::cell::RefCell;
+use std::collections::BTreeMap;
 use freetype as ft;
 use nalgebra::Vec2;
 use unicode_normalization::UnicodeNormalization;
@@ -14,11 +13,9 @@ macro_rules! cast (
 );
 
 
-pub type Key = (PathBuf, u32, char);
 
 pub struct System {
     library: ft::Library,
-    pub cache: RefCell<HashMap<Key, Glyph>>,
 }
 
 
@@ -26,10 +23,20 @@ impl System {
     pub fn new() -> System {
         System {
             library: ft::Library::init().unwrap(),
-            cache: RefCell::new(HashMap::new()),
         }
     }
 }
+
+
+#[derive(Hash)]
+pub struct Key {
+    character: char,
+    font_size: u32,
+    font_path: PathBuf,
+}
+
+
+pub type Cache = BTreeMap<Key, Glyph>;
 
 
 pub struct Face<'a> {
@@ -121,7 +128,7 @@ impl TextStyle {
 }
 
 
-pub fn draw(system: &System, style: &TextStyle, hidpi_factor: f32, text: &String)
+pub fn draw(style: TextStyle, hidpi_factor: f32, text: String)
         -> Canvas {
     macro_rules! scale (
         ($x:expr) => (
@@ -129,23 +136,15 @@ pub fn draw(system: &System, style: &TextStyle, hidpi_factor: f32, text: &String
         )
     );
 
-    let face = Face::new(system, style.font.clone());
-    let mut cache = system.cache.borrow_mut();
+    let system = System::new();
+    let face = Face::new(&system, style.font.clone());
     let font_size = scale!(style.font_size) as u32;
     face.set_size(font_size);
     let chars: Vec<char> = text.nfc().collect();
 
     // Load
-    let keys: Vec<Key> = chars.iter()
-        .map(|c| (style.font.clone(), font_size, *c)).collect();
-    for key in keys.iter() {
-        let c = key.2;
-        if !cache.contains_key(key) {
-            let glyph = Glyph::new(&face, c);
-            cache.insert(key.clone(), glyph);
-        }
-    }
-    let glyphs: Vec<_> = keys.iter().map(|key| cache.get(&key).unwrap()).collect();
+    let glyphs: Vec<Glyph> = chars.iter()
+        .map(|c| Glyph::new(&face, *c)).collect();
 
     let mut ascent = 0;
     let mut descent = 0;
@@ -172,7 +171,7 @@ pub fn draw(system: &System, style: &TextStyle, hidpi_factor: f32, text: &String
 
         for index in 0..chars.len() {
             let c = chars[index];
-            let glyph = glyphs[index];
+            let glyph = &glyphs[index];
 
             let out_box = !auto_width && (w + glyph.advance.x + padding >= width);
             if out_box || c == '\n' {
@@ -193,7 +192,7 @@ pub fn draw(system: &System, style: &TextStyle, hidpi_factor: f32, text: &String
 
     for index in 0..chars.len() {
         let c = chars[index];
-        let glyph = glyphs[index];
+        let glyph = &glyphs[index];
 
         // Wrap
         let out_box = pen.x + padding + glyph.advance.x >= width as i32;
