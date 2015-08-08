@@ -87,9 +87,10 @@ fn main() {
     let mut game_camera = Camera::new(&display);
     let mut ui_camera = Camera::new(&display);
 
+    let test_text = "你们有一个好，全世界跑到什么地方，你们比其他的西方记者啊跑得还快。\n但是呢问来问去的问题啊，too simple，啊，sometimes naïve！";
     let text_style = engine::text::TextStyle::new(env.font.clone());
     let fps_style = engine::text::TextStyle::new(env.font.clone());
-    let mut label = env.engine.label(text_style, "你们有一个好，全世界跑到什么地方，你们比其他的西方记者啊跑得还快。\n但是呢问来问去的问题啊，too simple，啊，sometimes naïve！")
+    let mut label = env.engine.label(text_style, &test_text)
             .anchor(na![-1.0, -1.0])
             .position(ui_camera.right_top())
             .build(&pool);
@@ -105,8 +106,9 @@ fn main() {
             ui_camera.update(delta);
             queue.update(delta, stream)
         };
-        let fps = format!("FPS: {}", env.engine.timer.fps());
-        let test: Vec<_> = (0..10).map(|_| env.engine.label(fps_style.clone(), fps.clone())
+        //let fps = format!("FPS: {}", env.engine.timer.fps());
+        println!("{}", env.engine.timer.fps());
+        let test: Vec<_> = (0..10).map(|_| env.engine.label(fps_style.clone(), &test_text)
                 .anchor(na![1.0, -1.0])
                 .position(ui_camera.left_top())
                 .build(&pool)

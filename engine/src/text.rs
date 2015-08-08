@@ -1,5 +1,7 @@
 use std::path::PathBuf;
-use std::collections::BTreeMap;
+use std::sync::Arc;
+use std::cell::RefCell;
+use std::collections::HashMap;
 use freetype as ft;
 use nalgebra::Vec2;
 use unicode_normalization::UnicodeNormalization;
@@ -16,6 +18,7 @@ macro_rules! cast (
 
 pub struct System {
     library: ft::Library,
+    cache: RefCell<GlyphCache>,
 }
 
 
@@ -23,12 +26,13 @@ impl System {
     pub fn new() -> System {
         System {
             library: ft::Library::init().unwrap(),
+            cache: RefCell::new(GlyphCache::new()),
         }
     }
 }
 
 
-#[derive(Hash)]
+#[derive(Hash, PartialEq, Eq, Clone)]
 pub struct Key {
     character: char,
     font_size: u32,
@@ -36,7 +40,7 @@ pub struct Key {
 }
 
 
-pub type Cache = BTreeMap<Key, Glyph>;
+pub type GlyphCache = HashMap<Key, Arc<Glyph>>;
 
 
 pub struct Face<'a> {
@@ -128,28 +132,46 @@ impl TextStyle {
 }
 
 
-pub fn draw(style: TextStyle, hidpi_factor: f32, text: String)
-        -> Canvas {
+
+pub fn load(system: &System, style: &TextStyle, hidpi_factor: f32, text: &String)
+    -> Vec<(char, Arc<Glyph>)>
+{
+    let mut cache = system.cache.borrow_mut();
+    let face = Face::new(&system, style.font.clone());
+    let font_size = (style.font_size as f32 * hidpi_factor) as u32;
+    face.set_size(font_size);
+    let mut result = Vec::with_capacity(text.nfc().count());
+    for c in text.nfc() {
+        let key = Key {
+            character: c,
+            font_path: style.font.clone(),
+            font_size: font_size,
+        };
+        if !cache.contains_key(&key) {
+            let glyph = Arc::new(Glyph::new(&face, c));
+            cache.insert(key.clone(), glyph.clone());
+            result.push((c, glyph))
+        }
+        else {
+            result.push((c, cache[&key].clone()))
+        }
+    }
+    return result;
+}
+
+
+pub fn draw(style: TextStyle, hidpi_factor: f32, glyphs: Vec<(char, Arc<Glyph>)>)
+    -> Canvas
+{
     macro_rules! scale (
         ($x:expr) => (
             ($x as f32 * hidpi_factor) as i32
         )
     );
-
-    let system = System::new();
-    let face = Face::new(&system, style.font.clone());
-    let font_size = scale!(style.font_size) as u32;
-    face.set_size(font_size);
-    let chars: Vec<char> = text.nfc().collect();
-
-    // Load
-    let glyphs: Vec<Glyph> = chars.iter()
-        .map(|c| Glyph::new(&face, *c)).collect();
-
     let mut ascent = 0;
     let mut descent = 0;
 
-    for glyph in &glyphs {
+    for &(_, ref glyph) in &glyphs {
         let now_ascent = glyph.bearing.y;
         if now_ascent > ascent { ascent = now_ascent }
         let now_descent = -(glyph.bounding.y - now_ascent);
@@ -169,10 +191,7 @@ pub fn draw(style: TextStyle, hidpi_factor: f32, text: String)
         let mut w = padding;
         let mut h = ascent+padding;
 
-        for index in 0..chars.len() {
-            let c = chars[index];
-            let glyph = &glyphs[index];
-
+        for &(c, ref glyph) in &glyphs {
             let out_box = !auto_width && (w + glyph.advance.x + padding >= width);
             if out_box || c == '\n' {
                 if auto_width && w >= width { width = w+padding+1 }
@@ -190,10 +209,7 @@ pub fn draw(style: TextStyle, hidpi_factor: f32, text: String)
     let mut canvas = Canvas::new(width as usize, height as usize);
     let mut pen = na![padding, ascent+padding];
 
-    for index in 0..chars.len() {
-        let c = chars[index];
-        let glyph = &glyphs[index];
-
+    for (c, glyph) in glyphs {
         // Wrap
         let out_box = pen.x + padding + glyph.advance.x >= width as i32;
         if out_box || c == '\n' {

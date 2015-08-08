@@ -1,3 +1,4 @@
+use std::rc::Rc;
 use glium::Display;
 use widget::Label;
 use context::Context;
@@ -8,6 +9,7 @@ pub struct Engine<'display> {
     pub timer: ProgramTimer,
     pub display: &'display Display,
     pub context: Context<'display>,
+    pub text_system: Rc<text::System>,
 }
 
 
@@ -17,12 +19,13 @@ impl<'display> Engine<'display> {
             timer: ProgramTimer::new(),
             display: display,
             context: Context::new(display),
+            text_system: Rc::new(text::System::new()),
         }
     }
 
     pub fn label<T: ToString>(&self, style: text::TextStyle, x: T) -> Label {
         let hidpi_factor = self.display.get_window().unwrap().hidpi_factor();
-        Label::new(style, hidpi_factor, x)
+        Label::new(self.text_system.clone(), style, hidpi_factor, x)
     }
 
     pub fn update(&mut self) {

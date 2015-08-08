@@ -3,14 +3,17 @@ use std::string::ToString;
 use std::sync::mpsc::{Receiver, channel};
 use threadpool::ThreadPool;
 use glium::Display;
+use std::rc::Rc;
 use sprite::Sprite;
 use canvas::Canvas;
 use widget::WidgetBuilder;
-use text::{TextStyle, draw};
+use text;
+use text::{TextStyle, GlyphCache, System};
 
 
 #[derive(Clone)]
 pub struct Label {
+    system: Rc<System>,
     style: TextStyle,
     position: Vec2<f32>,
     hidpi_factor: f32,
@@ -20,9 +23,10 @@ pub struct Label {
 
 
 impl Label {
-    pub fn new<T>(style: TextStyle, hidpi_factor: f32, x: T)
+    pub fn new<T>(system: Rc<System>, style: TextStyle, hidpi_factor: f32, x: T)
             -> Label where T: ToString {
         Label {
+            system: system,
             style: style,
             position: ::na::zero(),
             anchor: ::na::zero(),
@@ -44,13 +48,16 @@ impl Label {
 
 impl WidgetBuilder for Label {
     fn render(&self, pool: &ThreadPool) -> Receiver<Canvas> {
+        let glyphs = text::load(&*self.system,
+                                &self.style,
+                                self.hidpi_factor,
+                                &self.text);
         let (tx, rx) = channel();
         let style = self.style.clone();
         let f = self.hidpi_factor;
-        let text = self.text.clone();
         pool.execute(
             move || {
-                tx.send(draw(style, f, text)).unwrap();
+                tx.send(text::draw(style, f, glyphs)).unwrap();
             }
         );
         return rx;
