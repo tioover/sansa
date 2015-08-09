@@ -1,19 +1,19 @@
 use na::Vec2;
 use std::string::ToString;
 use std::sync::mpsc::{Receiver, channel};
+use std::sync::{Arc, Mutex};
 use threadpool::ThreadPool;
 use glium::Display;
-use std::rc::Rc;
 use sprite::Sprite;
 use canvas::Canvas;
 use widget::WidgetBuilder;
 use text;
-use text::{TextStyle, GlyphCache, System};
+use text::{TextStyle, GlyphCache};
 
 
 #[derive(Clone)]
 pub struct Label {
-    system: Rc<System>,
+    cache: Arc<Mutex<GlyphCache>>,
     style: TextStyle,
     position: Vec2<f32>,
     hidpi_factor: f32,
@@ -23,10 +23,10 @@ pub struct Label {
 
 
 impl Label {
-    pub fn new<T>(system: Rc<System>, style: TextStyle, hidpi_factor: f32, x: T)
+    pub fn new<T>(cache: Arc<Mutex<GlyphCache>>, style: TextStyle, hidpi_factor: f32, x: T)
             -> Label where T: ToString {
         Label {
-            system: system,
+            cache: cache,
             style: style,
             position: ::na::zero(),
             anchor: ::na::zero(),
@@ -48,16 +48,19 @@ impl Label {
 
 impl WidgetBuilder for Label {
     fn render(&self, pool: &ThreadPool) -> Receiver<Canvas> {
-        let glyphs = text::load(&*self.system,
-                                &self.style,
-                                self.hidpi_factor,
-                                &self.text);
         let (tx, rx) = channel();
+        let cache = self.cache.clone();
         let style = self.style.clone();
+        let text = self.text.clone();
         let f = self.hidpi_factor;
         pool.execute(
             move || {
-                tx.send(text::draw(style, f, glyphs)).unwrap();
+                let glyphs = {
+                    let mut cache = cache.lock().unwrap();
+                    text::load(&mut *cache, &style, f, &text)
+                };
+                let xs = glyphs.iter().map(|&(c, ref g)| (c, &**g)).collect();
+                tx.send(text::draw(style, f, xs)).unwrap();
             }
         );
         return rx;

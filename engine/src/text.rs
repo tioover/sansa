@@ -1,6 +1,5 @@
 use std::path::PathBuf;
 use std::sync::Arc;
-use std::cell::RefCell;
 use std::collections::HashMap;
 use freetype as ft;
 use nalgebra::Vec2;
@@ -18,7 +17,6 @@ macro_rules! cast (
 
 pub struct System {
     library: ft::Library,
-    cache: RefCell<GlyphCache>,
 }
 
 
@@ -26,7 +24,6 @@ impl System {
     pub fn new() -> System {
         System {
             library: ft::Library::init().unwrap(),
-            cache: RefCell::new(GlyphCache::new()),
         }
     }
 }
@@ -133,10 +130,10 @@ impl TextStyle {
 
 
 
-pub fn load(system: &System, style: &TextStyle, hidpi_factor: f32, text: &String)
+pub fn load(cache: &mut GlyphCache, style: &TextStyle, hidpi_factor: f32, text: &String)
     -> Vec<(char, Arc<Glyph>)>
 {
-    let mut cache = system.cache.borrow_mut();
+    let system = System::new();
     let face = Face::new(&system, style.font.clone());
     let font_size = (style.font_size as f32 * hidpi_factor) as u32;
     face.set_size(font_size);
@@ -160,7 +157,7 @@ pub fn load(system: &System, style: &TextStyle, hidpi_factor: f32, text: &String
 }
 
 
-pub fn draw(style: TextStyle, hidpi_factor: f32, glyphs: Vec<(char, Arc<Glyph>)>)
+pub fn draw(style: TextStyle, hidpi_factor: f32, glyphs: Vec<(char, &Glyph)>)
     -> Canvas
 {
     macro_rules! scale (
@@ -231,7 +228,7 @@ pub fn draw(style: TextStyle, hidpi_factor: f32, glyphs: Vec<(char, Arc<Glyph>)>
                 let value = line[j];
                 let color = style.color.alpha(value);
 
-                if x < width as i32 || y < height as i32 || value > 0.1 {
+                if x < width || y < height || value > 0.1 {
                     canvas[(x, y)] = color;
                 }
             }
