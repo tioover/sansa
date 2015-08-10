@@ -72,4 +72,3 @@ impl WidgetBuilder for Label {
             .anchor(self.anchor)
     }
 }
-

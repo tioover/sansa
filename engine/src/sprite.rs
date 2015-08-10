@@ -95,6 +95,19 @@ impl Sprite {
 
 
 
+impl Renderable for Sprite {
+    fn draw(&self, context: &Context, parent: Mat) {
+        context.draw(&self.mesh(&context.display),
+            &uniform! {
+                matrix: parent,
+                color_multiply: self.color_multiply.as_array(),
+                tex: &self.image.texture.data,
+            }
+        );
+    }
+}
+
+
 
 impl Update for Sprite {
     fn update(&mut self, delta: Ms, stream: EventStream) -> EventStream {
@@ -163,19 +176,6 @@ pub mod animate {
 
 
     pub fn fade_out(ms: Ms) -> State<Sprite> { fade(ms, 1.0, 0.0) }
-}
-
-
-impl Renderable for Sprite {
-    fn draw(&self, context: &Context, parent: Mat) {
-        context.draw(&self.mesh(&context.display),
-            &uniform! {
-                matrix: parent,
-                color_multiply: self.color_multiply.as_array(),
-                tex: &self.image.texture.data,
-            }
-        );
-    }
 }
 
 

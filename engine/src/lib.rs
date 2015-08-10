@@ -50,7 +50,7 @@ pub use glium::{Frame, Display};
 pub use timer::{ProgramTimer, Timer, Ms};
 pub use context::Context;
 pub use image::Image;
-pub use renderable::{Renderable, render};
+pub use renderable::{Renderable};
 pub use sprite::Sprite;
 pub use event::{Event, WindowEvent, EventStream, Update};
 pub use widget::{Label, Widget, WidgetBuilder};
