@@ -2,48 +2,40 @@ use glium::{Display, Program, DrawParameters, Frame, Surface};
 use glium::uniforms::Uniforms;
 use mesh::Mesh;
 pub use math::Mat;
-pub use context::Context;
 
 
 pub trait Renderable {
-    fn draw(&self, context: &Context, parent: Mat);
+    fn draw(&self, renderer: &Renderer, target: &mut Frame, parent: Mat);
 }
 
 
 impl<'a> Renderable for Vec<&'a Renderable> {
-    fn draw(&self, context: &Context, parent: Mat) {
+    fn draw(&self, renderer: &Renderer, target: &mut Frame, parent: Mat) {
         for x in self {
-            x.draw(context, parent);
+            x.draw(renderer, target, parent);
         }
     }
 }
 
 
-macro_rules! params {
-    () => (
-        let blending_function = ::glium::BlendingFunction::Addition {
-            source: ::glium::LinearBlendingFactor::SourceAlpha,
-            destination: ::glium::LinearBlendingFactor::OneMinusSourceAlpha,
-        };
-
-        DrawParameters::DrawParameters {
-            blending_function: Some (blending_function),
-            .. ::std::default::Default::default()
-        }
-    )
-}
-
-
-struct Renderer<'display> {
-    display: &'display Display,
+pub struct Renderer<'display> {
+    pub display: &'display Display,
     program: Program,
     params: DrawParameters<'display>,
 }
 
 
+
 impl<'display> Renderer<'display> {
-    pub fn new(display: &'display Display, shader: (&str, &str)) -> Renderer<'display> {
-        let (vertex, fragment) = shader;
+    pub fn new(display: &'display Display) -> Renderer<'display> {
+        Renderer::with_shader(display,
+                              include_str!("shader/140/default.vert"),
+                              include_str!("shader/140/default.frag"))
+    }
+
+    pub fn with_shader(display: &'display Display, vertex: &str, fragment: &str)
+        -> Renderer<'display>
+    {
         let program = program!(display,
             140 => {
                 vertex: vertex,
@@ -66,6 +58,10 @@ impl<'display> Renderer<'display> {
             uniforms,
             &self.params
         ).unwrap();
+    }
+
+    pub fn render<T: Renderable>(&self, target: &mut Frame, renderable: &T, matrix: Mat) {
+        renderable.draw(self, target, matrix);
     }
 
     fn build_params<'a>() -> DrawParameters<'a> {

@@ -1,11 +1,10 @@
 use std::rc::Rc;
-use glium::{Display, Surface};
+use glium::{Display, Surface, Frame};
 use na;
 use na::Vec2;
 use color::Color;
 use image::Image;
-use renderable::Renderable;
-use ::Context;
+use renderable::{Renderable, Renderer};
 use texture::Texture;
 use mesh::{Mesh, Vertex};
 use event::{Update, EventStream};
@@ -96,8 +95,8 @@ impl Sprite {
 
 
 impl Renderable for Sprite {
-    fn draw(&self, context: &Context, parent: Mat) {
-        context.draw(&self.mesh(&context.display),
+    fn draw(&self, renderer: &Renderer, target: &mut Frame, parent: Mat) {
+        renderer.draw(target, &self.mesh(&renderer.display),
             &uniform! {
                 matrix: parent,
                 color_multiply: self.color_multiply.as_array(),
@@ -227,8 +226,8 @@ impl Batch {
 
 
 impl Renderable for Batch {
-    fn draw(&self, context: &Context, parent: Mat) {
-        context.draw(&self.mesh,
+    fn draw(&self, renderer: &Renderer, target: &mut Frame, parent: Mat) {
+        renderer.draw(target, &self.mesh,
             &uniform! {
                 matrix: parent,
                 color_multiply: self.color_multiply,
@@ -240,7 +239,7 @@ impl Renderable for Batch {
 
 
 impl<'a> Renderable for Vec<&'a Sprite> {
-    fn draw(&self, context: &Context, parent: Mat) {
+    fn draw(&self, renderer: &Renderer, target: &mut Frame, parent: Mat) {
         let len = self.len();
         let mut head = 0;
 
@@ -248,11 +247,11 @@ impl<'a> Renderable for Vec<&'a Sprite> {
         for i in 1..len+1 {
             if i == len || !self[head].similar(self[i]) {
                 if i-head == 1 {
-                    self[head].draw(context, parent);
+                    self[head].draw(renderer, target, parent);
                 }
                 else {
-                    Batch::new(context.display, &self[head..i])
-                        .draw(context, parent);
+                    Batch::new(renderer.display, &self[head..i])
+                        .draw(renderer, target, parent);
                 }
                 head = i;
             }

@@ -1,12 +1,13 @@
 use std::cell::RefCell;
 use std::sync::mpsc::Receiver;
-use glium::Display;
+use threadpool::ThreadPool;
+use glium::{Display, Frame};
 use sprite::Sprite;
-use renderable::*;
+use renderable::{Renderer, Renderable};
 use event::{Update, EventStream};
 use timer::Ms;
 use canvas::Canvas;
-use threadpool::ThreadPool;
+use math::Mat;
 
 pub mod label;
 
@@ -41,10 +42,10 @@ impl<B: WidgetBuilder> Widget<B> {
 }
 
 impl<B: WidgetBuilder> Renderable for Widget<B> {
-    fn draw(&self, ctx: &Context, parent: Mat) {
+    fn draw(&self, renderer: &Renderer, target: &mut Frame, parent: Mat) {
         {
             if let &Thunk::Just(ref sprite) = &*self.thunk.borrow() {
-                sprite.draw(ctx, parent);
+                sprite.draw(renderer, target, parent);
                 return
             }
         }
@@ -53,8 +54,8 @@ impl<B: WidgetBuilder> Renderable for Widget<B> {
             &mut Thunk::Wait(ref x) => x.recv().unwrap(),
             _ => unreachable!(),
         };
-        let sprite = self.builder.sprite(ctx.display, canvas);
-        sprite.draw(ctx, parent);
+        let sprite = self.builder.sprite(renderer.display, canvas);
+        sprite.draw(renderer, target, parent);
         *thunk = Thunk::Just(sprite);
     }
 }
