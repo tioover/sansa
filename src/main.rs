@@ -21,7 +21,7 @@ use std::path::PathBuf;
 use threadpool::ThreadPool;
 use na::Vec2;
 use glium::{Display, Surface};
-use engine::{Texture, Manager, WidgetBuilder, Sprite, Update, Label,
+use engine::{Texture, Manager, WidgetBuilder, Sprite, Update, Label, Renderer,
              Engine, Camera, Renderable, EventStream, Event, WindowEvent,
              build_display};
 use engine::timer::Ms;

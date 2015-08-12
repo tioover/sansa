@@ -220,16 +220,21 @@ pub fn draw(style: TextStyle, hidpi_factor: f32, glyphs: Vec<(char, &Glyph)>)
         // Draw
         pen.x += glyph.bearing.x;
         for i in 0..glyph.data.len() {
-            let line = &glyph.data[i];
-            for j in 0..line.len() {
-                let x = pen.x+j as i32;
-                let y = pen.y-glyph.bearing.y+i as i32;
+            let glyph_line = &glyph.data[i];
+            let draw_y = pen.y-glyph.bearing.y+i as i32;
 
-                let value = line[j];
-                let color = style.color.alpha(value);
+            if draw_y >= canvas.height as i32 || draw_y < 0 {
+                continue
+            }
 
-                if x < width || y < height || value > 0.1 {
-                    canvas[(x, y)] = color;
+            let mut canvas_line = canvas.line_mut(draw_y as usize);
+
+            for j in 0..glyph_line.len() {
+                let value = glyph_line[j];
+                let n = pen.x + j as i32;
+
+                if n < width && n >= 0 && value > 0.1 {
+                    canvas_line[n as usize] = style.color.alpha(value)
                 }
             }
         }
