@@ -64,12 +64,12 @@ impl Canvas {
     pub fn line<'a>(&'a mut self, n: usize) -> &'a [Color] {
         let n = self.height - n - 1;
         let w = self.width;
-        &self.buffer[n*w..n*(w+1)]
+        &self.buffer[n*w..n*w+w]
     }
 
     pub fn line_mut<'a>(&'a mut self, n: usize) -> &'a mut [Color] {
         let n = self.height - n - 1;
         let w = self.width;
-        &mut self.buffer[n*w..n*(w+1)]
+        &mut self.buffer[n*w..n*w+w]
     }
 }

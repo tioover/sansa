@@ -75,6 +75,7 @@ impl<'a> Env<'a> {
 fn main() {
     let turn_time = 250;
     let display = build_display("sansa".to_string(), (800, 600));
+    let renderer = Renderer::new(&display);
     let pool = ThreadPool::new(8);
 
     let mut env = Env::new(&display);
@@ -106,13 +107,11 @@ fn main() {
             ui_camera.update(delta);
             queue.update(delta, stream)
         };
-        //let fps = format!("FPS: {}", env.engine.timer.fps());
-        println!("{}", env.engine.timer.fps());
-        let test: Vec<_> = (0..10).map(|_| env.engine.label(fps_style.clone(), &test_text)
+        let fps = format!("FPS: {}", env.engine.timer.fps());
+        let fps = env.engine.label(fps_style.clone(), &fps)
                 .anchor(na![1.0, -1.0])
                 .position(ui_camera.left_top())
-                .build(&pool)
-            ).collect();
+                .build(&pool);
         for e in stream.iter() {
             use glium::glutin::ElementState;
 
@@ -164,14 +163,10 @@ fn main() {
             offset = na::zero();
         }
         // render
-        env.engine.context.frame();
-        ground.iter().collect::<Vec<_>>()
-            .draw(&env.engine.context, game_camera.matrix());
-        label.draw(&env.engine.context, ui_camera.matrix());
-        for x in &test {
-            x.draw(&env.engine.context, ui_camera.matrix());
-        }
-        env.engine.context.finish();
+        let mut target = display.draw();
+        renderer.render(&mut target, &ground.iter().collect::<Vec<_>>(), game_camera.matrix());
+        renderer.render::<Vec<&Renderable>>(&mut target, &vec![&label, &fps], ui_camera.matrix());
+        target.finish().unwrap();
         env.update();
         for e in stream.iter() {
             match e {
