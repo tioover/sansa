@@ -39,7 +39,7 @@ mod transform;
 mod mesh;
 mod image;
 mod camera;
-mod renderable;
+mod render;
 mod texture;
 mod engine;
 
@@ -48,7 +48,7 @@ pub use nalgebra as na;
 pub use glium::{Frame, Display};
 pub use timer::{ProgramTimer, Timer, Ms};
 pub use image::Image;
-pub use renderable::{Renderable, Renderer};
+pub use render::{Renderable, Renderer};
 pub use sprite::Sprite;
 pub use event::{Event, WindowEvent, EventStream, Update};
 pub use widget::{Label, Widget, WidgetBuilder};

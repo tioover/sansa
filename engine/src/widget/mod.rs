@@ -3,7 +3,7 @@ use std::sync::mpsc::Receiver;
 use threadpool::ThreadPool;
 use glium::{Display, Frame};
 use sprite::Sprite;
-use renderable::{Renderer, Renderable};
+use render::{Renderer, Renderable};
 use event::{Update, EventStream};
 use timer::Ms;
 use canvas::Canvas;

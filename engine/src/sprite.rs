@@ -4,7 +4,7 @@ use na;
 use na::Vec2;
 use color::Color;
 use image::Image;
-use renderable::{Renderable, Renderer};
+use render::{Renderable, Renderer};
 use texture::Texture;
 use mesh::{Mesh, Vertex};
 use event::{Update, EventStream};
