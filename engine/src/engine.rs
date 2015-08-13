@@ -2,12 +2,12 @@ use std::sync::{Arc, Mutex};
 use glium::Display;
 use widget::Label;
 use timer::ProgramTimer;
-use text;
+use text::{TextStyle, GlyphCache};
 
 pub struct Engine<'display> {
     pub timer: ProgramTimer,
     pub display: &'display Display,
-    pub glyph_cache: Arc<Mutex<text::GlyphCache>>,
+    pub glyph_cache: Arc<Mutex<GlyphCache>>,
 }
 
 
@@ -16,17 +16,18 @@ impl<'display> Engine<'display> {
         Engine {
             timer: ProgramTimer::new(),
             display: display,
-            glyph_cache: Arc::new(Mutex::new(text::GlyphCache::new())),
+            glyph_cache: Arc::new(Mutex::new(GlyphCache::new())),
         }
     }
 
-    pub fn label<T: ToString>(&self, style: text::TextStyle, x: T) -> Label {
-        let hidpi_factor = self.display.get_window().unwrap().hidpi_factor();
-        Label::new(self.glyph_cache.clone(), style, hidpi_factor, x)
+    pub fn label<T: ToString>(&self, style: TextStyle, x: T) -> Label {
+        let style = style.factor(self.display.get_window().unwrap().hidpi_factor());
+        Label::new(self.glyph_cache.clone(), style, x)
     }
 
     pub fn update(&mut self) {
         self.timer.update();
     }
 }
+
 

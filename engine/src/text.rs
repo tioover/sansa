@@ -7,6 +7,7 @@ use unicode_normalization::UnicodeNormalization;
 use color::Color;
 use canvas::Canvas;
 
+
 macro_rules! cast (
     ($x:expr) => (
         ($x >> 6) as i32
@@ -56,17 +57,21 @@ impl<'a> Face<'a> {
     }
 
     pub fn set_size(&self, size: u32) {
-        self.ft_face.set_pixel_sizes(size, 0).unwrap();
+        let size = size as isize * 64;
+        let dpi = 72;
+        self.ft_face.set_char_size(size, size, dpi, dpi).unwrap();
     }
 }
 
 
 #[derive(Clone)]
 pub struct Glyph {
-    data: Vec<Vec<f32>>,
-    advance: Vec2<i32>,
-    bearing: Vec2<i32>,
-    bounding: Vec2<i32>,
+    buffer: Vec<f32>,
+    pub bitmap_width: usize,
+    pub bitmap_rows: usize,
+    pub advance: Vec2<i32>,
+    pub bearing: Vec2<i32>,
+    pub bounding: Vec2<i32>,
 }
 
 
@@ -79,23 +84,25 @@ impl Glyph {
         let bearing = na![cast!(metrics.horiBearingX), cast!(metrics.horiBearingY)];
         let bounding = na![cast!(metrics.width), cast!(metrics.height)];
         let bitmap = glyph.bitmap();
-        let row = bitmap.rows() as usize;
-        let width = bitmap.width() as usize;
         let buffer = bitmap.buffer();
-        let mut data = Vec::with_capacity(row);
-        for i in 0..row {
-            let mut line = Vec::with_capacity(width);
-            for j in 0..width {
-                line.push(buffer[i*width+j] as f32 / u8::max_value() as f32)
-            }
-            data.push(line);
+        let mut data = Vec::with_capacity(buffer.len());
+        let max = u8::max_value() as f32;
+        for v in buffer {
+            data.push(*v as f32 / max);
         }
         Glyph {
-            data: data,
+            buffer: data,
+            bitmap_width: bitmap.width() as usize,
+            bitmap_rows: bitmap.rows() as usize,
             advance: advance,
             bearing: bearing,
             bounding: bounding,
         }
+    }
+
+    pub fn get_line(&self, i: usize) -> &[f32] {
+        let w = self.bitmap_width;
+        &self.buffer[i*w..(i+1)*w]
     }
 }
 
@@ -106,10 +113,11 @@ pub struct TextStyle {
     pub color: Color,
     pub font_size: u32,
     pub underline: bool,
-    pub width: u32,
-    pub height: u32,
+    pub width: usize,
+    pub height: usize,
     pub linegap: i32,
     pub padding: i32,
+    pub hidpi_factor: f32,
 }
 
 
@@ -124,25 +132,64 @@ impl TextStyle {
             height: 0,
             linegap: 0,
             padding: 10,
+            hidpi_factor: 1.0,
+        }
+    }
+
+    pub fn factor(self, hidpi_factor: f32) -> TextStyle {
+        macro_rules! scale (($x:expr) => (
+            $x as f32 * hidpi_factor
+        ));
+        if self.hidpi_factor != 1.0 {
+            return self.inverse_factor().factor(hidpi_factor);
+        }
+
+        TextStyle {
+            font: self.font,
+            color: self.color,
+            font_size: scale!(self.font_size) as u32,
+            underline: self.underline,
+            width: scale!(self.width) as usize,
+            height: scale!(self.height) as usize,
+            linegap: scale!(self.linegap) as i32,
+            padding: scale!(self.padding) as i32,
+            hidpi_factor: hidpi_factor
+        }
+    }
+
+    fn inverse_factor(self) -> TextStyle {
+        macro_rules! scale (($x:expr) => (
+            $x as f32 / self.hidpi_factor
+        ));
+
+        TextStyle {
+            font: self.font,
+            color: self.color,
+            font_size: scale!(self.font_size) as u32,
+            underline: self.underline,
+            width: scale!(self.width) as usize,
+            height: scale!(self.height) as usize,
+            linegap: scale!(self.linegap) as i32,
+            padding: scale!(self.padding) as i32,
+            hidpi_factor: 1.0,
         }
     }
 }
 
 
 
-pub fn load(cache: &mut GlyphCache, style: &TextStyle, hidpi_factor: f32, text: &String)
+pub fn load(cache: &mut GlyphCache, style: &TextStyle, text: &String)
     -> Vec<(char, Arc<Glyph>)>
 {
     let system = System::new();
     let face = Face::new(&system, style.font.clone());
-    let font_size = (style.font_size as f32 * hidpi_factor) as u32;
-    face.set_size(font_size);
+    face.set_size(style.font_size);
     let mut result = Vec::with_capacity(text.nfc().count());
     for c in text.nfc() {
         let key = Key {
             character: c,
             font_path: style.font.clone(),
-            font_size: font_size,
+            font_size: style.font_size,
         };
         if !cache.contains_key(&key) {
             let glyph = Arc::new(Glyph::new(&face, c));
@@ -157,14 +204,9 @@ pub fn load(cache: &mut GlyphCache, style: &TextStyle, hidpi_factor: f32, text: 
 }
 
 
-pub fn draw(style: TextStyle, hidpi_factor: f32, glyphs: Vec<(char, &Glyph)>)
+pub fn draw(style: TextStyle, glyphs: Vec<(char, &Glyph)>)
     -> Canvas
 {
-    macro_rules! scale (
-        ($x:expr) => (
-            ($x as f32 * hidpi_factor) as i32
-        )
-    );
     let mut ascent = 0;
     let mut descent = 0;
 
@@ -176,10 +218,9 @@ pub fn draw(style: TextStyle, hidpi_factor: f32, glyphs: Vec<(char, &Glyph)>)
     }
     let glyph_height = ascent - descent;
 
-    let linegap = scale!(style.linegap);
-    let padding = scale!(style.padding);
-    let mut width = scale!(style.width);
-    let mut height = scale!(style.height);
+    let padding = style.padding;
+    let mut width = style.width as i32;
+    let mut height = style.height as i32;
     let auto_width = width == 0;
     let auto_height = height == 0;
 
@@ -193,7 +234,7 @@ pub fn draw(style: TextStyle, hidpi_factor: f32, glyphs: Vec<(char, &Glyph)>)
             if out_box || c == '\n' {
                 if auto_width && w >= width { width = w+padding+1 }
                 w = padding;
-                h += glyph_height + linegap;
+                h += glyph_height + style.linegap;
             }
             w += glyph.advance.x;
         }
@@ -211,7 +252,7 @@ pub fn draw(style: TextStyle, hidpi_factor: f32, glyphs: Vec<(char, &Glyph)>)
         let out_box = pen.x + padding + glyph.advance.x >= width as i32;
         if out_box || c == '\n' {
             pen.x = padding;
-            pen.y += glyph_height + linegap;
+            pen.y += glyph_height + style.linegap;
         }
 
         // ASCII control character
@@ -219,8 +260,8 @@ pub fn draw(style: TextStyle, hidpi_factor: f32, glyphs: Vec<(char, &Glyph)>)
 
         // Draw
         pen.x += glyph.bearing.x;
-        for i in 0..glyph.data.len() {
-            let glyph_line = &glyph.data[i];
+        for i in 0..glyph.bitmap_rows {
+            let glyph_line = glyph.get_line(i);
             let draw_y = pen.y-glyph.bearing.y+i as i32;
 
             if draw_y >= canvas.height as i32 || draw_y < 0 {
@@ -233,7 +274,7 @@ pub fn draw(style: TextStyle, hidpi_factor: f32, glyphs: Vec<(char, &Glyph)>)
                 let value = glyph_line[j];
                 let n = pen.x + j as i32;
 
-                if n < width && n >= 0 && value > 0.1 {
+                if n < width && n >= 0 && value > 0.025 {
                     canvas_line[n as usize] = style.color.alpha(value)
                 }
             }
@@ -241,5 +282,5 @@ pub fn draw(style: TextStyle, hidpi_factor: f32, glyphs: Vec<(char, &Glyph)>)
         pen.x += glyph.advance.x - glyph.bearing.x;
     }
 
-    return canvas.factor(hidpi_factor);
+    return canvas.factor(style.hidpi_factor);
 }

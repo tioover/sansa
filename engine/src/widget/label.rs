@@ -16,14 +16,13 @@ pub struct Label {
     cache: Arc<Mutex<GlyphCache>>,
     style: TextStyle,
     position: Vec2<f32>,
-    hidpi_factor: f32,
     anchor: Vec2<f32>,
     text: String,
 }
 
 
 impl Label {
-    pub fn new<T>(cache: Arc<Mutex<GlyphCache>>, style: TextStyle, hidpi_factor: f32, x: T)
+    pub fn new<T>(cache: Arc<Mutex<GlyphCache>>, style: TextStyle, x: T)
             -> Label where T: ToString {
         Label {
             cache: cache,
@@ -31,7 +30,6 @@ impl Label {
             position: ::na::zero(),
             anchor: ::na::zero(),
             text: x.to_string(),
-            hidpi_factor: hidpi_factor,
         }
     }
 
@@ -52,15 +50,14 @@ impl WidgetBuilder for Label {
         let cache = self.cache.clone();
         let style = self.style.clone();
         let text = self.text.clone();
-        let f = self.hidpi_factor;
         pool.execute(
             move || {
                 let glyphs = {
                     let mut cache = cache.lock().unwrap();
-                    text::load(&mut *cache, &style, f, &text)
+                    text::load(&mut *cache, &style, &text)
                 };
                 let xs = glyphs.iter().map(|&(c, ref g)| (c, &**g)).collect();
-                tx.send(text::draw(style, f, xs)).unwrap();
+                tx.send(text::draw(style, xs)).unwrap();
             }
         );
         return rx;
