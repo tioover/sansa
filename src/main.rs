@@ -96,7 +96,6 @@ fn main() {
             .position(ui_camera.right_top())
             .build(&pool);
 
-
     'main: loop {
         let stream = { // update
             let stream = EventStream::new(&display);
@@ -107,11 +106,6 @@ fn main() {
             ui_camera.update(delta);
             queue.update(delta, stream)
         };
-        let fps = format!("FPS: {}", env.engine.timer.fps());
-        let fps = env.engine.label(fps_style.clone(), &fps)
-                .anchor(na![1.0, -1.0])
-                .position(ui_camera.left_top())
-                .build(&pool);
         for e in stream.iter() {
             use glium::glutin::ElementState;
 
@@ -165,7 +159,7 @@ fn main() {
         // render
         let mut target = display.draw();
         renderer.render(&mut target, &ground.iter().collect::<Vec<_>>(), game_camera.matrix());
-        renderer.render::<Vec<&Renderable>>(&mut target, &vec![&label, &fps], ui_camera.matrix());
+        renderer.render::<Vec<&Renderable>>(&mut target, &vec![&label], ui_camera.matrix());
         target.finish().unwrap();
         env.update();
         for e in stream.iter() {

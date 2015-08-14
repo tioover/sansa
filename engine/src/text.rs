@@ -113,8 +113,8 @@ pub struct TextStyle {
     pub color: Color,
     pub font_size: u32,
     pub underline: bool,
-    pub width: usize,
-    pub height: usize,
+    pub width: Option<usize>,
+    pub height: Option<usize>,
     pub linegap: i32,
     pub padding: i32,
     pub hidpi_factor: f32,
@@ -128,8 +128,8 @@ impl TextStyle {
             color: Color::black(),
             font_size: 18,
             underline: false,
-            width: 0,
-            height: 0,
+            width: None,
+            height: None,
             linegap: 0,
             padding: 10,
             hidpi_factor: 1.0,
@@ -149,8 +149,8 @@ impl TextStyle {
             color: self.color,
             font_size: scale!(self.font_size) as u32,
             underline: self.underline,
-            width: scale!(self.width) as usize,
-            height: scale!(self.height) as usize,
+            width: self.width.map(|x| scale!(x) as usize),
+            height: self.height.map(|x| scale!(x) as usize),
             linegap: scale!(self.linegap) as i32,
             padding: scale!(self.padding) as i32,
             hidpi_factor: hidpi_factor
@@ -163,12 +163,12 @@ impl TextStyle {
         ));
 
         TextStyle {
+            width: self.width.map(|x| scale!(x) as usize),
+            height: self.height.map(|x| scale!(x) as usize),
             font: self.font,
             color: self.color,
             font_size: scale!(self.font_size) as u32,
             underline: self.underline,
-            width: scale!(self.width) as usize,
-            height: scale!(self.height) as usize,
             linegap: scale!(self.linegap) as i32,
             padding: scale!(self.padding) as i32,
             hidpi_factor: 1.0,
@@ -219,13 +219,13 @@ pub fn draw(style: TextStyle, glyphs: Vec<(char, &Glyph)>)
     let glyph_height = ascent - descent;
 
     let padding = style.padding;
-    let mut width = style.width as i32;
-    let mut height = style.height as i32;
-    let auto_width = width == 0;
-    let auto_height = height == 0;
+    let auto_width = style.width.is_none();
+    let auto_height = style.height.is_none();
 
     // Compute canvas size
-    if auto_width || auto_height {
+    let (width, height) = if auto_width || auto_height {
+        let mut width = if auto_width { 0 } else { style.width.unwrap() } as i32;
+        let mut height = if auto_height { 0 } else { style.height.unwrap() } as i32;
         let mut w = padding;
         let mut h = ascent+padding;
 
@@ -241,7 +241,10 @@ pub fn draw(style: TextStyle, glyphs: Vec<(char, &Glyph)>)
         h += -descent + padding;
         if auto_width && w >= width { width = w+padding+1 }
         if auto_height { height = h+1 }
-    }
+        (width, height)
+    } else {
+        (style.width.unwrap() as i32, style.height.unwrap() as i32)
+    };
 
     // Typesetting
     let mut canvas = Canvas::new(width as usize, height as usize);
