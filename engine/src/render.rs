@@ -80,3 +80,15 @@ impl<'display> Renderer<'display> {
         }
     }
 }
+
+
+pub trait DisplayExt {
+    fn hidpi_factor(&self) -> f32;
+}
+
+
+impl DisplayExt for Display {
+    fn hidpi_factor(&self) -> f32 {
+        self.get_window().unwrap().hidpi_factor()
+    }
+}
