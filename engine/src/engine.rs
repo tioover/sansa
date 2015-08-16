@@ -1,4 +1,3 @@
-use std::sync::{Arc, Mutex};
 use glium::Display;
 use widget::Label;
 use timer::ProgramTimer;
@@ -7,7 +6,7 @@ use text::{TextStyle, GlyphCache};
 pub struct Engine<'display> {
     pub timer: ProgramTimer,
     pub display: &'display Display,
-    pub glyph_cache: Arc<Mutex<GlyphCache>>,
+    pub glyph_cache: GlyphCache,
 }
 
 
@@ -16,7 +15,7 @@ impl<'display> Engine<'display> {
         Engine {
             timer: ProgramTimer::new(),
             display: display,
-            glyph_cache: Arc::new(Mutex::new(GlyphCache::new())),
+            glyph_cache: GlyphCache::new(),
         }
     }
 

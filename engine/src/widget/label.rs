@@ -1,7 +1,6 @@
 use na::Vec2;
 use std::string::ToString;
 use std::sync::mpsc::{Receiver, channel};
-use std::sync::{Arc, Mutex};
 use threadpool::ThreadPool;
 use glium::Display;
 use sprite::Sprite;
@@ -13,7 +12,7 @@ use text::{TextStyle, GlyphCache};
 
 #[derive(Clone)]
 pub struct Label {
-    cache: Arc<Mutex<GlyphCache>>,
+    cache: GlyphCache,
     style: TextStyle,
     position: Vec2<f32>,
     anchor: Vec2<f32>,
@@ -22,7 +21,7 @@ pub struct Label {
 
 
 impl Label {
-    pub fn new<T>(cache: Arc<Mutex<GlyphCache>>, style: TextStyle, x: T)
+    pub fn new<T>(cache: GlyphCache, style: TextStyle, x: T)
             -> Label where T: ToString {
         Label {
             cache: cache,

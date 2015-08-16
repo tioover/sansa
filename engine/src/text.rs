@@ -1,5 +1,6 @@
 use std::path::PathBuf;
-use std::sync::Arc;
+use std::ops::Deref;
+use std::sync::{Arc, Mutex};
 use std::collections::HashMap;
 use freetype as ft;
 use nalgebra::Vec2;
@@ -37,8 +38,32 @@ pub struct Key {
     font_path: PathBuf,
 }
 
+pub type CacheMap = HashMap<Key, Arc<Glyph>>;
 
-pub type GlyphCache = HashMap<Key, Arc<Glyph>>;
+
+#[derive(Clone)]
+pub struct GlyphCache(Arc<Mutex<CacheMap>>);
+
+
+impl GlyphCache {
+    pub fn new() -> GlyphCache {
+        GlyphCache(Arc::new(Mutex::new(HashMap::new())))
+    }
+}
+
+
+impl Deref for GlyphCache {
+    type Target = Arc<Mutex<CacheMap>>;
+
+    fn deref<'a>(&'a self) -> &'a Self::Target {
+        let &GlyphCache(ref x) = self;
+        x
+    }
+}
+
+
+unsafe impl Sync for GlyphCache {}
+unsafe impl Send for GlyphCache {}
 
 
 pub struct Face<'a> {
@@ -178,7 +203,7 @@ impl TextStyle {
 
 
 
-pub fn load(cache: &mut GlyphCache, style: &TextStyle, text: &String)
+pub fn load(cache: &mut CacheMap, style: &TextStyle, text: &String)
     -> Vec<(char, Arc<Glyph>)>
 {
     let system = System::new();
