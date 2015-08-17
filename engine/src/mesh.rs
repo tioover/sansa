@@ -11,6 +11,14 @@ pub struct Vertex {
 implement_vertex!(Vertex, position, tex_coords);
 
 
+impl Vertex {
+    pub fn in_screen(&self) -> bool {
+        let [a, b] = self.position;
+        (a <= 1.0 || a >= -1.0) && (b <= 1.0 || b >= -1.0)
+    }
+}
+
+
 pub type VertexBuffer = glium::VertexBuffer<Vertex>;
 pub type IndexBuffer = glium::IndexBuffer<u16>;
 

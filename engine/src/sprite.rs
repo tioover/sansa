@@ -59,9 +59,14 @@ impl Sprite {
         ]
     }
 
-    fn mesh(&self, display: &Display) -> Mesh {
+    fn mesh(&self, display: &Display) -> Option<Mesh> {
         let vertices = Sprite::vertices(self.size, &self.transform, &self.image);
-        Mesh::rectangle(display, vertices)
+        if vertices.iter().all(|v| v.in_screen()) {
+            Some(Mesh::rectangle(display, vertices))
+        }
+        else {
+            None
+        }
     }
 
     pub fn transform(self, transform: Transform) -> Sprite {
@@ -86,7 +91,7 @@ impl Sprite {
         self.state = state;
     }
 
-    fn similar(&self, other: &Sprite) -> bool {
+    fn batchable(&self, other: &Sprite) -> bool {
         self.image.texture == other.image.texture &&
         self.color_multiply == other.color_multiply
     }
@@ -96,7 +101,9 @@ impl Sprite {
 
 impl Renderable for Sprite {
     fn draw(&self, renderer: &Renderer, target: &mut Frame, parent: Mat) {
-        renderer.draw(target, &self.mesh(&renderer.display),
+        let mesh = self.mesh(&renderer.display);
+        if mesh.is_none() { return }
+        renderer.draw(target, &mesh.unwrap(),
             &uniform! {
                 matrix: parent,
                 color_multiply: self.color_multiply.as_array(),
@@ -202,6 +209,8 @@ impl Batch {
             let vertices = Sprite::vertices(sprite.size,
                                             &sprite.transform,
                                             &sprite.image);
+            let in_screen = vertices.iter().all(|v| v.in_screen());
+            if !in_screen { continue }
 
             for i in 0..4 {
                 chunk[i] = vertices[i];
@@ -245,7 +254,7 @@ impl<'a> Renderable for Vec<&'a Sprite> {
 
 
         for i in 1..len+1 {
-            if i == len || !self[head].similar(self[i]) {
+            if i == len || !self[head].batchable(self[i]) {
                 if i-head == 1 {
                     self[head].draw(renderer, target, parent);
                 }
