@@ -106,6 +106,7 @@ fn main() {
             ui_camera.update(delta);
             queue.update(delta, stream)
         };
+        // println!("FPS: {:3}", env.engine.timer.fps());
         for e in stream.iter() {
             use glium::glutin::ElementState;
 

@@ -16,6 +16,7 @@ pub struct ProgramTimer {
     updates: VecDeque<Ns>,
     now: Ns,
     pub delta: Ms,
+    frame_limit: u64,
 }
 
 
@@ -26,11 +27,22 @@ impl ProgramTimer {
             updates: VecDeque::with_capacity(128),
             now: now,
             delta: 0,
+            frame_limit: 60,
         }
+    }
+
+    pub fn frame(self, limit: u64) -> ProgramTimer {
+        ProgramTimer { frame_limit: limit, ..self }
     }
 
     // Thanks https://github.com/PistonDevelopers/fps_counter/
     pub fn update(&mut self) {
+        let now = time::precise_time_ns();
+        let per_frame_ns = SECOND_NS / self.frame_limit;
+        let delta = now - self.now;
+        if per_frame_ns > delta {
+            ::std::thread::sleep_ms(((per_frame_ns - delta) / MS_NS) as u32);
+        }
         let now = time::precise_time_ns();
         let a_second_ago = now - SECOND_NS;
         self.delta = (now - self.now) / MS_NS; // microsecond
