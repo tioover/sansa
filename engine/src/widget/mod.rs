@@ -1,6 +1,3 @@
-use std::cell::RefCell;
-use std::sync::mpsc::Receiver;
-use threadpool::ThreadPool;
 use glium::{Display, Frame};
 use sprite::Sprite;
 use render::{Renderer, Renderable};
@@ -14,56 +11,45 @@ pub mod label;
 pub use self::label::Label;
 
 
-pub enum Thunk {
-    Just (Sprite),
-    Wait (Receiver<Canvas>),
-}
-
-
 pub trait WidgetBuilder: Clone {
     fn sprite(&self, &Display, Canvas) -> Sprite;
-    fn render(&self, &ThreadPool) -> Receiver<Canvas>;
+    fn render(&self) -> Canvas;
 
-    fn build(self, pool: &ThreadPool) -> Widget<Self> {
-        Widget {
-            thunk: RefCell::new(Thunk::Wait(self.render(pool))),
-            builder: self,
-        }
+    fn build(self, display: &Display) -> Widget<Self> {
+        Widget::new(display, self)
     }
 }
 
 
 pub struct Widget<B: WidgetBuilder> {
-    thunk: RefCell<Thunk>,
+    sprite: Box<Sprite>,
     pub builder: B,
 }
 
 impl<B: WidgetBuilder> Widget<B> {
+    pub fn new(display: &Display, builder: B) -> Widget<B> {
+        let canvas = builder.render();
+        Widget::with_canvas(display, builder, canvas)
+    }
+
+    pub fn with_canvas(display: &Display, builder: B, canvas: Canvas) -> Widget<B> {
+        Widget {
+            sprite: box builder.sprite(display, canvas),
+            builder: builder,
+        }
+    }
 }
 
 impl<B: WidgetBuilder> Renderable for Widget<B> {
     fn draw(&self, renderer: &Renderer, target: &mut Frame, parent: Mat) {
-        {
-            if let &Thunk::Just(ref sprite) = &*self.thunk.borrow() {
-                sprite.draw(renderer, target, parent);
-                return
-            }
-        }
-        let thunk = &mut *self.thunk.borrow_mut();
-        let canvas = match thunk {
-            &mut Thunk::Wait(ref x) => x.recv().unwrap(),
-            _ => unreachable!(),
-        };
-        let sprite = self.builder.sprite(renderer.display, canvas);
-        sprite.draw(renderer, target, parent);
-        *thunk = Thunk::Just(sprite);
+        self.sprite.draw(renderer, target, parent);
     }
 }
 
 
 impl<B: WidgetBuilder> Update for Widget<B> {
-    fn update(&mut self, delta: Ms, stream: EventStream) -> EventStream {
-        //self.sprite.update(delta, stream)
-        stream
+    fn update(&mut self, delta: Ms, mut stream: EventStream) -> EventStream {
+        stream = self.sprite.update(delta, stream);
+        return stream;
     }
 }

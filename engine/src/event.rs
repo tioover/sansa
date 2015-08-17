@@ -1,4 +1,5 @@
 use std::ops::Deref;
+use std::any::Any;
 use glium::Display;
 use timer::Ms;
 pub use glium::glutin::Event as WindowEvent;
@@ -8,6 +9,7 @@ pub use glium::glutin::Event as WindowEvent;
 pub enum Event {
     Window (WindowEvent),
     Message (String),
+    Something (String, Box<Any>),
 }
 
 

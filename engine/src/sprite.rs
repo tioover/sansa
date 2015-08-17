@@ -193,7 +193,7 @@ pub struct Batch {
 
 
 impl Batch {
-    pub fn new(display: &Display, sprites: &[&Sprite]) -> Batch {
+    pub fn from_sprites(display: &Display, sprites: &[&Sprite]) -> Batch {
         use mesh::{VertexBuffer, IndexBuffer};
         use glium::index::PrimitiveType;
 
@@ -259,7 +259,7 @@ impl<'a> Renderable for Vec<&'a Sprite> {
                     self[head].draw(renderer, target, parent);
                 }
                 else {
-                    Batch::new(renderer.display, &self[head..i])
+                    Batch::from_sprites(renderer.display, &self[head..i])
                         .draw(renderer, target, parent);
                 }
                 head = i;

@@ -1,7 +1,5 @@
 use na::Vec2;
 use std::string::ToString;
-use std::sync::mpsc::{Receiver, channel};
-use threadpool::ThreadPool;
 use glium::Display;
 use sprite::Sprite;
 use canvas::Canvas;
@@ -44,22 +42,13 @@ impl Label {
 
 
 impl WidgetBuilder for Label {
-    fn render(&self, pool: &ThreadPool) -> Receiver<Canvas> {
-        let (tx, rx) = channel();
-        let cache = self.cache.clone();
-        let style = self.style.clone();
-        let text = self.text.clone();
-        pool.execute(
-            move || {
-                let glyphs = {
-                    let mut cache = cache.lock().unwrap();
-                    text::load(&mut *cache, &style, &text)
-                };
-                let xs = glyphs.iter().map(|&(c, ref g)| (c, &**g)).collect();
-                tx.send(text::draw(style, xs)).unwrap();
-            }
-        );
-        return rx;
+    fn render(&self) -> Canvas {
+        let glyphs = {
+            let mut cache = self.cache.lock().unwrap();
+            text::load(&mut *cache, &self.style, &self.text)
+        };
+        let xs = glyphs.iter().map(|&(c, ref g)| (c, &**g)).collect();
+        text::draw(&self.style, xs)
     }
 
     fn sprite(&self, display: &Display, canvas: Canvas) -> Sprite {

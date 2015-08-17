@@ -229,7 +229,7 @@ pub fn load(cache: &mut CacheMap, style: &TextStyle, text: &String)
 }
 
 
-pub fn draw(style: TextStyle, glyphs: Vec<(char, &Glyph)>)
+pub fn draw(style: &TextStyle, glyphs: Vec<(char, &Glyph)>)
     -> Canvas
 {
     let mut ascent = 0;

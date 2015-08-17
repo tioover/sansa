@@ -8,7 +8,6 @@ extern crate rand;
 extern crate noise;
 extern crate uuid;
 extern crate time;
-extern crate threadpool;
 #[macro_use]
 extern crate engine;
 
@@ -18,7 +17,6 @@ mod tile;
 
 pub use nalgebra as na;
 use std::path::PathBuf;
-use threadpool::ThreadPool;
 use na::Vec2;
 use glium::{Display, Surface};
 use engine::{Texture, Manager, WidgetBuilder, Sprite, Update, Label, Renderer,
@@ -76,7 +74,6 @@ fn main() {
     let turn_time = 250;
     let display = build_display("sansa".to_string(), (800, 600));
     let renderer = Renderer::new(&display);
-    let pool = ThreadPool::new(8);
 
     let mut env = Env::new(&display);
 
@@ -94,7 +91,7 @@ fn main() {
     let mut label = env.engine.label(text_style, &test_text)
             .anchor(na![-1.0, -1.0])
             .position(ui_camera.right_top())
-            .build(&pool);
+            .build(&display);
 
     'main: loop {
         let stream = { // update
