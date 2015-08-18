@@ -58,10 +58,10 @@ impl Batch {
 
 
 impl Renderable for Batch {
-    fn draw(&self, renderer: &Renderer, target: &mut Frame, parent: Mat) {
+    fn draw(&self, renderer: &Renderer, target: &mut Frame, parent: &Mat) {
         renderer.draw(target, &self.mesh,
             &uniform! {
-                matrix: parent,
+                matrix: *parent,
                 color_multiply: self.color_multiply,
                 tex: &self.texture.data
             }
@@ -71,7 +71,7 @@ impl Renderable for Batch {
 
 
 impl<'a> Renderable for Vec<&'a Sprite> {
-    fn draw(&self, renderer: &Renderer, target: &mut Frame, parent: Mat) {
+    fn draw(&self, renderer: &Renderer, target: &mut Frame, parent: &Mat) {
         let len = self.len();
 
         if len == 0 { return }

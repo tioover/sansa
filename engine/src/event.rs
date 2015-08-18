@@ -2,6 +2,7 @@ use std::ops::Deref;
 use std::any::Any;
 use glium::Display;
 use timer::Ms;
+use render::Renderer;
 pub use glium::glutin::Event as WindowEvent;
 
 
@@ -45,15 +46,17 @@ impl Deref for EventStream {
 
 
 pub trait Update {
-    fn update(&mut self, delta: Ms, stream: EventStream) -> EventStream;
+    fn update(&mut self, renderer: &Renderer, delta: Ms, stream: EventStream) -> EventStream;
 }
 
 
 
 impl<'a> Update for Vec<&'a mut Update> {
-    fn update(&mut self, delta: Ms, mut stream: EventStream) -> EventStream {
+    fn update(&mut self, renderer: &Renderer, delta: Ms, mut stream: EventStream)
+        -> EventStream
+    {
         for item in self {
-            stream = item.update(delta, stream);
+            stream = item.update(renderer, delta, stream);
         }
         return stream;
     }

@@ -5,12 +5,12 @@ pub use math::Mat;
 
 
 pub trait Renderable {
-    fn draw(&self, renderer: &Renderer, target: &mut Frame, parent: Mat);
+    fn draw(&self, renderer: &Renderer, target: &mut Frame, parent: &Mat);
 }
 
 
 impl<'a> Renderable for Vec<&'a Renderable> {
-    fn draw(&self, renderer: &Renderer, target: &mut Frame, parent: Mat) {
+    fn draw(&self, renderer: &Renderer, target: &mut Frame, parent: &Mat) {
         for x in self {
             x.draw(renderer, target, parent);
         }
@@ -60,7 +60,7 @@ impl<'display> Renderer<'display> {
         ).unwrap();
     }
 
-    pub fn render<T: Renderable>(&self, target: &mut Frame, renderable: &T, matrix: Mat) {
+    pub fn render<T: Renderable>(&self, target: &mut Frame, renderable: &T, matrix: &Mat) {
         renderable.draw(self, target, matrix);
     }
 

@@ -101,7 +101,7 @@ fn main() {
             let delta = env.engine.timer.delta;
             game_camera.update(delta);
             ui_camera.update(delta);
-            queue.update(delta, stream)
+            queue.update(&renderer, delta, stream)
         };
         // println!("FPS: {:3}", env.engine.timer.fps());
         for e in stream.iter() {
@@ -156,8 +156,8 @@ fn main() {
         }
         // render
         let mut target = display.draw();
-        renderer.render(&mut target, &ground.iter().collect::<Vec<_>>(), game_camera.matrix());
-        renderer.render::<Vec<&Renderable>>(&mut target, &vec![&label], ui_camera.matrix());
+        renderer.render(&mut target, &ground.iter().collect::<Vec<_>>(), &game_camera.matrix());
+        renderer.render::<Vec<&Renderable>>(&mut target, &vec![&label], &ui_camera.matrix());
         target.finish().unwrap();
         env.update();
         for e in stream.iter() {

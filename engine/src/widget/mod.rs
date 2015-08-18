@@ -14,6 +14,7 @@ pub use self::label::Label;
 pub trait WidgetBuilder: Clone {
     fn sprite(&self, &Display, Canvas) -> Sprite;
     fn render(&self) -> Canvas;
+    fn event_respond(&self, EventStream, &mut Sprite) -> (EventStream, Option<Self>);
 
     fn build(self, display: &Display) -> Widget<Self> {
         Widget::new(display, self)
@@ -22,7 +23,7 @@ pub trait WidgetBuilder: Clone {
 
 
 pub struct Widget<B: WidgetBuilder> {
-    sprite: Box<Sprite>,
+    sprite: Sprite,
     pub builder: B,
 }
 
@@ -34,22 +35,30 @@ impl<B: WidgetBuilder> Widget<B> {
 
     pub fn with_canvas(display: &Display, builder: B, canvas: Canvas) -> Widget<B> {
         Widget {
-            sprite: box builder.sprite(display, canvas),
+            sprite: builder.sprite(display, canvas),
             builder: builder,
         }
     }
 }
 
 impl<B: WidgetBuilder> Renderable for Widget<B> {
-    fn draw(&self, renderer: &Renderer, target: &mut Frame, parent: Mat) {
+    fn draw(&self, renderer: &Renderer, target: &mut Frame, parent: &Mat) {
         self.sprite.draw(renderer, target, parent);
     }
 }
 
 
 impl<B: WidgetBuilder> Update for Widget<B> {
-    fn update(&mut self, delta: Ms, mut stream: EventStream) -> EventStream {
-        stream = self.sprite.update(delta, stream);
+    fn update(&mut self, renderer: &Renderer, delta: Ms, stream: EventStream)
+        -> EventStream
+    {
+        let (mut stream, rebuilder) = self.builder.event_respond(stream, &mut self.sprite);
+        if let Some(new) = rebuilder {
+            *self = Widget::new(renderer.display, new)
+        }
+        else {
+            stream = self.sprite.update(renderer, delta, stream);
+        }
         return stream;
     }
 }

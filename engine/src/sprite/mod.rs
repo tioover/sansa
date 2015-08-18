@@ -101,12 +101,12 @@ impl Sprite {
 
 
 impl Renderable for Sprite {
-    fn draw(&self, renderer: &Renderer, target: &mut Frame, parent: Mat) {
+    fn draw(&self, renderer: &Renderer, target: &mut Frame, parent: &Mat) {
         let mesh = self.mesh(&renderer.display);
         if mesh.is_none() { return }
         renderer.draw(target, &mesh.unwrap(),
             &uniform! {
-                matrix: parent,
+                matrix: *parent,
                 color_multiply: self.color_multiply.as_array(),
                 tex: &self.texture.data,
             }
@@ -117,7 +117,7 @@ impl Renderable for Sprite {
 
 
 impl Update for Sprite {
-    fn update(&mut self, delta: Ms, stream: EventStream) -> EventStream {
+    fn update(&mut self, _: &Renderer, delta: Ms, stream: EventStream) -> EventStream {
         use std::mem::swap;
         use animation::Return;
 

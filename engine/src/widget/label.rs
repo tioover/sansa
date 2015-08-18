@@ -6,6 +6,7 @@ use canvas::Canvas;
 use widget::WidgetBuilder;
 use text;
 use text::{TextStyle, GlyphCache};
+use event::EventStream;
 
 
 #[derive(Clone)]
@@ -49,6 +50,12 @@ impl WidgetBuilder for Label {
         };
         let xs = glyphs.iter().map(|&(c, ref g)| (c, &**g)).collect();
         text::draw(&self.style, xs)
+    }
+
+    fn event_respond(&self, stream: EventStream, _: &mut Sprite)
+        -> (EventStream, Option<Label>)
+    {
+        (stream, None)
     }
 
     fn sprite(&self, display: &Display, canvas: Canvas) -> Sprite {
