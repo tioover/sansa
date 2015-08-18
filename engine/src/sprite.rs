@@ -3,7 +3,6 @@ use glium::{Display, Surface, Frame};
 use na;
 use na::Vec2;
 use color::Color;
-use image::Image;
 use render::{Renderable, Renderer};
 use texture::Texture;
 use mesh::{Mesh, Vertex};
@@ -16,37 +15,46 @@ use animation::State;
 
 #[derive(Clone)]
 pub struct Sprite {
-    pub image: Image,
     pub size: Vec2<f32>,
     pub transform: Transform,
+    pub texture_offset: Vec2<f32>,
     pub color_multiply: Color,
+    texture: Rc<Texture>,
+    texture_clip_size: Vec2<f32>,
     state: State<Sprite>,
 }
 
 
 impl Sprite {
-    pub fn new(size: Vec2<i32>, image: Image) -> Sprite {
+    pub fn new(size: Vec2<i32>, clip_size: Vec2<i32>, texture: Rc<Texture>)
+        -> Sprite
+    {
         Sprite {
-            image: image,
             size: na::cast(size),
             transform: Transform::new(),
-            color_multiply: Color::white(),
             state: State::Nil,
+            texture_clip_size: na::cast(clip_size),
+            texture: texture,
+            color_multiply: Color::white(),
+            texture_offset: na::zero(),
         }
     }
 
-    fn vertices(size: Vec2<f32>, transform: &Transform, image: &Image)
-                -> [Vertex; 4] {
-        let tex_w = image.texture.width as f32;
-        let tex_h = image.texture.height as f32;
-        let &[w, h] = image.size.as_array();
-        let &[i, j] = image.offset.as_array();
-        let &[a, b] = (size / 2.0).as_array();
+    pub fn offset(self, offset: Vec2<i32>) -> Sprite {
+        Sprite { texture_offset: na::cast(offset), ..self }
+    }
+
+    pub fn rectangle(&self) -> [Vertex; 4] {
+        let tex_w = self.texture.width as f32;
+        let tex_h = self.texture.height as f32;
+        let &[w, h] = self.texture_clip_size.as_array();
+        let &[i, j] = self.texture_offset.as_array();
+        let &[a, b] = (self.size / 2.0).as_array();
 
         macro_rules! vertex {
             ([$a:expr, $b:expr] [$c:expr, $d:expr]) => (
                 Vertex {
-                    position: *transform.compute(na![$a, $b]).as_array(),
+                    position: *self.transform.compute(na![$a, $b]).as_array(),
                     tex_coords: [($c+i)/tex_w, 1.0-($d+j)/tex_h],
                 }
             )
@@ -59,14 +67,12 @@ impl Sprite {
         ]
     }
 
+    fn batchable(&self, other: &Sprite) -> bool {
+        self.texture == other.texture && self.color_multiply == other.color_multiply
+    }
+
     fn mesh(&self, display: &Display) -> Option<Mesh> {
-        let vertices = Sprite::vertices(self.size, &self.transform, &self.image);
-        if vertices.iter().all(|v| v.in_screen()) {
-            Some(Mesh::rectangle(display, vertices))
-        }
-        else {
-            None
-        }
+        Some(Mesh::rectangle(display, self.rectangle()))
     }
 
     pub fn transform(self, transform: Transform) -> Sprite {
@@ -90,11 +96,6 @@ impl Sprite {
     pub fn set_state(&mut self, state: State<Sprite>) {
         self.state = state;
     }
-
-    fn batchable(&self, other: &Sprite) -> bool {
-        self.image.texture == other.image.texture &&
-        self.color_multiply == other.color_multiply
-    }
 }
 
 
@@ -107,7 +108,7 @@ impl Renderable for Sprite {
             &uniform! {
                 matrix: parent,
                 color_multiply: self.color_multiply.as_array(),
-                tex: &self.image.texture.data,
+                tex: &self.texture.data,
             }
         );
     }
@@ -199,18 +200,17 @@ impl Batch {
 
         let len = sprites.len();
 
-        if len == 0 { panic!("No sprite for batch.") }
+        if len == 0 { panic!() }
+
+        let first = sprites[0];
 
         let mut vb = VertexBuffer::empty_dynamic(display, len * 4).unwrap();
         let mut ib = Vec::with_capacity(len * 6);
 
         for (i, chunk) in vb.map().chunks_mut(4).enumerate() {
             let sprite = sprites[i];
-            let vertices = Sprite::vertices(sprite.size,
-                                            &sprite.transform,
-                                            &sprite.image);
-            let in_screen = vertices.iter().all(|v| v.in_screen());
-            if !in_screen { continue }
+            assert!(first.batchable(sprite));
+            let vertices = sprite.rectangle();
 
             for i in 0..4 {
                 chunk[i] = vertices[i];
@@ -226,9 +226,9 @@ impl Batch {
         let index = IndexBuffer::new(display, PrimitiveType::TrianglesList, &ib[..]).unwrap();
         let mesh = Mesh::new(vb, index);
         Batch {
-            texture: sprites[0].image.texture.clone(),
+            texture: first.texture.clone(),
             mesh: mesh,
-            color_multiply: Color::white(),
+            color_multiply: first.color_multiply,
         }
     }
 }
@@ -250,20 +250,27 @@ impl Renderable for Batch {
 impl<'a> Renderable for Vec<&'a Sprite> {
     fn draw(&self, renderer: &Renderer, target: &mut Frame, parent: Mat) {
         let len = self.len();
-        let mut head = 0;
 
+        if len == 0 { return }
 
-        for i in 1..len+1 {
-            if i == len || !self[head].batchable(self[i]) {
-                if i-head == 1 {
-                    self[head].draw(renderer, target, parent);
-                }
-                else {
-                    Batch::from_sprites(renderer.display, &self[head..i])
-                        .draw(renderer, target, parent);
-                }
-                head = i;
+        let mut i = 0;
+
+        for j in 1..len+1 {
+            // utill last element or next unbatchable sprite.
+            if j != len && self[i].batchable(self[j]) { continue }
+
+            // else cutoff and render.
+            if j-i > 1 {
+                // multiple sprite should batch ender.
+                let sprites = &self[i..j];
+                let batch = Batch::from_sprites(renderer.display, sprites);
+                batch.draw(renderer, target, parent);
             }
+            else {
+                // only one sprite.
+                self[i].draw(renderer, target, parent);
+            }
+            i = j;
         }
     }
 }

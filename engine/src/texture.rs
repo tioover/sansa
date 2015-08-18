@@ -1,4 +1,4 @@
-use img;
+use image;
 use uuid::Uuid;
 use glium::Display;
 use glium::texture::{Texture2dDataSource, CompressedTexture2d};
@@ -40,6 +40,6 @@ impl Eq for Texture {}
 
 impl Resource for Texture {
     fn load(display: &Display, path: &Path) -> Texture {
-        Texture::new(display, img::open(path).unwrap())
+        Texture::new(display, image::open(path).unwrap())
     }
 }

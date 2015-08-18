@@ -4,7 +4,7 @@ use std::rc::Rc;
 use std::borrow::Cow;
 use glium::Display;
 use color::Color;
-use ::{Image, Texture};
+use ::Texture;
 use sprite::Sprite;
 use glium::texture::{RawImage2d, PixelValue};
 
@@ -54,11 +54,10 @@ impl Canvas {
             height: self.height as u32,
             format: Color::get_format(),
         });
-        let size = Vec2::new(self.width as i32, self.height as i32);
-        let image = Image::new(Rc::new(texture), size);
-        let size: Vec2<f32> = na::cast(size);
+        let canvas_size = Vec2::new(self.width as i32, self.height as i32);
+        let size: Vec2<f32> = na::cast(canvas_size);
         let size = na::cast(size/self.hidpi_factor);
-        Sprite::new(size, image)
+        Sprite::new(size, canvas_size, Rc::new(texture))
     }
 
     pub fn line<'a>(&'a mut self, n: usize) -> &'a [Color] {

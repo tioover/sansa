@@ -1,7 +1,7 @@
 #![feature(box_syntax, box_patterns, slice_patterns, rc_weak)]
 #[macro_use]
 extern crate glium;
-extern crate image as img;
+extern crate image;
 extern crate num;
 extern crate nalgebra;
 extern crate time;
@@ -37,7 +37,6 @@ pub mod widget;
 pub mod text;
 mod transform;
 mod mesh;
-mod image;
 mod camera;
 mod render;
 mod texture;
@@ -47,7 +46,6 @@ mod engine;
 pub use nalgebra as na;
 pub use glium::{Frame, Display};
 pub use timer::{ProgramTimer, Timer, Ms};
-pub use image::Image;
 pub use render::{Renderable, Renderer};
 pub use sprite::Sprite;
 pub use event::{Event, WindowEvent, EventStream, Update};
