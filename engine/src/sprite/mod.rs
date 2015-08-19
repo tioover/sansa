@@ -1,17 +1,21 @@
 use std::rc::Rc;
-use glium::{Display, Surface, Frame};
+use glium::{Surface, Frame};
 use na;
 use na::Vec2;
 use color::Color;
 use render::{Renderable, Renderer};
 use texture::Texture;
-use mesh::{Mesh, Vertex};
+use mesh::Polygon;
 use event::{Update, EventStream};
 use transform::Transform;
 use math::Mat;
 use timer::Ms;
 use animation::State;
+use self::rectangle::Rectangle;
 
+pub mod animate;
+pub mod batch;
+pub mod rectangle;
 
 #[derive(Clone)]
 pub struct Sprite {
@@ -44,35 +48,13 @@ impl Sprite {
         Sprite { texture_offset: na::cast(offset), ..self }
     }
 
-    pub fn rectangle(&self) -> [Vertex; 4] {
-        let tex_w = self.texture.width as f32;
-        let tex_h = self.texture.height as f32;
-        let &[w, h] = self.texture_clip_size.as_array();
-        let &[i, j] = self.texture_offset.as_array();
-        let &[a, b] = (self.size / 2.0).as_array();
-
-        macro_rules! vertex {
-            ([$a:expr, $b:expr] [$c:expr, $d:expr]) => (
-                Vertex {
-                    position: *self.transform.compute(na![$a, $b]).as_array(),
-                    tex_coords: [($c+i)/tex_w, 1.0-($d+j)/tex_h],
-                }
-            )
-        }
-        [
-            vertex!([-a,  b] [0.0, 0.0]),
-            vertex!([ a,  b] [  w, 0.0]),
-            vertex!([-a, -b] [0.0,   h]),
-            vertex!([ a, -b] [  w,   h]),
-        ]
-    }
-
     fn batchable(&self, other: &Sprite) -> bool {
         self.texture == other.texture && self.color_multiply == other.color_multiply
     }
 
-    fn mesh(&self, display: &Display) -> Option<Mesh> {
-        Some(Mesh::rectangle(display, self.rectangle()))
+    #[inline]
+    fn rectangle(&self) -> Rectangle {
+        Rectangle::new(self)
     }
 
     pub fn transform(self, transform: Transform) -> Sprite {
@@ -102,12 +84,11 @@ impl Sprite {
 
 impl Renderable for Sprite {
     fn draw(&self, renderer: &Renderer, target: &mut Frame, parent: &Mat) {
-        let mesh = self.mesh(&renderer.display);
-        if mesh.is_none() { return }
-        renderer.draw(target, &mesh.unwrap(),
+        let rect = self.rectangle();
+        renderer.draw(target, &rect.mesh(renderer.display),
             &uniform! {
                 matrix: *parent,
-                color_multiply: self.color_multiply.as_array(),
+                color_multiply: self.color_multiply,
                 tex: &self.texture.data,
             }
         );
@@ -117,7 +98,9 @@ impl Renderable for Sprite {
 
 
 impl Update for Sprite {
-    fn update(&mut self, _: &Renderer, delta: Ms, stream: EventStream) -> EventStream {
+    fn update(&mut self, _: &Renderer, delta: Ms, stream: EventStream)
+        -> EventStream
+    {
         use std::mem::swap;
         use animation::Return;
 
@@ -132,6 +115,3 @@ impl Update for Sprite {
 }
 
 
-pub mod animate;
-
-pub mod batch;

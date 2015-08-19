@@ -3,7 +3,7 @@ use glium::{Display, Surface, Frame};
 use color::Color;
 use render::{Renderable, Renderer};
 use texture::Texture;
-use mesh::Mesh;
+use mesh::{VertexBuffer, IndexBuffer, Polygon, Mesh};
 use math::Mat;
 use sprite::Sprite;
 
@@ -18,7 +18,6 @@ pub struct Batch {
 
 impl Batch {
     pub fn from_sprites(display: &Display, sprites: &[&Sprite]) -> Batch {
-        use mesh::{VertexBuffer, IndexBuffer};
         use glium::index::PrimitiveType;
 
         let len = sprites.len();
@@ -33,7 +32,7 @@ impl Batch {
         for (i, chunk) in vb.map().chunks_mut(4).enumerate() {
             let sprite = sprites[i];
             assert!(first.batchable(sprite));
-            let vertices = sprite.rectangle();
+            let vertices = sprite.rectangle().as_array();
 
             for i in 0..4 {
                 chunk[i] = vertices[i];
@@ -46,11 +45,14 @@ impl Batch {
             ib.push(num * 4 + 3);
             ib.push(num * 4 + 2);
         }
-        let index = IndexBuffer::new(display, PrimitiveType::TrianglesList, &ib[..]).unwrap();
-        let mesh = Mesh::new(vb, index);
         Batch {
             texture: first.texture.clone(),
-            mesh: mesh,
+            mesh: Mesh {
+                index_buffer: IndexBuffer::new(display,
+                                               PrimitiveType::TrianglesList,
+                                               &ib[..]).unwrap(),
+                vertex_buffer: vb,
+            },
             color_multiply: first.color_multiply,
         }
     }

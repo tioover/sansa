@@ -1,42 +1,28 @@
 use glium;
 use glium::Display;
+use na::Vec2;
 
 
 #[derive(Copy, Clone)]
 pub struct Vertex {
-    pub position: [f32; 2],
+    pub position: Vec2<f32>,
     pub tex_coords: [f32; 2],
 }
 
 implement_vertex!(Vertex, position, tex_coords);
 
 
-impl Vertex {
-}
-
-
 pub type VertexBuffer = glium::VertexBuffer<Vertex>;
 pub type IndexBuffer = glium::IndexBuffer<u16>;
 
 
-pub struct Mesh {
-    pub vertex: VertexBuffer,
-    pub index: IndexBuffer,
+pub trait Polygon {
+    fn mesh(&self, &Display) -> Mesh;
 }
 
 
-impl Mesh {
-    pub fn new(vertex: VertexBuffer, index: IndexBuffer) -> Mesh {
-        Mesh {
-            vertex: vertex,
-            index: index,
-        }
-    }
 
-    pub fn rectangle(display: &Display, vertices: [Vertex; 4]) -> Mesh {
-        let vertex = VertexBuffer::new(display, &vertices).unwrap();
-        let index_type = glium::index::PrimitiveType::TriangleStrip;
-        let index = IndexBuffer::new(display, index_type, &[0, 1, 2, 3]).unwrap();
-        Mesh::new(vertex, index)
-    }
+pub struct Mesh {
+    pub vertex_buffer: VertexBuffer,
+    pub index_buffer: IndexBuffer,
 }
