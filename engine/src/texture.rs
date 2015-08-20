@@ -1,5 +1,5 @@
 use image;
-use uuid::Uuid;
+use id::Id;
 use glium::Display;
 use glium::texture::{Texture2dDataSource, CompressedTexture2d};
 use std::cmp::{PartialEq, Eq};
@@ -7,7 +7,7 @@ use std::path::Path;
 use resources::Resource;
 
 pub struct Texture {
-    pub id: Uuid,
+    pub id: Id,
     pub height: u32,
     pub width: u32,
     pub data: CompressedTexture2d,
@@ -19,7 +19,7 @@ impl Texture {
             where T: Texture2dDataSource<'a> {
         let tex = CompressedTexture2d::new(display, source).unwrap();
         Texture {
-            id: Uuid::new_v4(),
+            id: Id::new(),
             width: tex.get_width(),
             height: tex.get_height().unwrap(),
             data: tex,

@@ -5,13 +5,14 @@ use event::{Update, EventStream};
 use timer::Ms;
 use canvas::Canvas;
 use math::Mat;
+use id::Id;
 
 pub mod label;
 
 pub use self::label::Label;
 
 
-pub trait WidgetBuilder: Clone {
+pub trait WidgetBuilder: Sized {
     fn sprite(&self, &Display, Canvas) -> Sprite;
     fn render(&self) -> Canvas;
     fn event_respond(&self, EventStream, &mut Sprite) -> (EventStream, Option<Self>);
@@ -23,9 +24,12 @@ pub trait WidgetBuilder: Clone {
 
 
 pub struct Widget<B: WidgetBuilder> {
+    pub id: Id,
+    visible: bool,
     sprite: Sprite,
     pub builder: B,
 }
+
 
 impl<B: WidgetBuilder> Widget<B> {
     pub fn new(display: &Display, builder: B) -> Widget<B> {
@@ -35,6 +39,8 @@ impl<B: WidgetBuilder> Widget<B> {
 
     pub fn with_canvas(display: &Display, builder: B, canvas: Canvas) -> Widget<B> {
         Widget {
+            id: Id::new(),
+            visible: true,
             sprite: builder.sprite(display, canvas),
             builder: builder,
         }
@@ -43,7 +49,9 @@ impl<B: WidgetBuilder> Widget<B> {
 
 impl<B: WidgetBuilder> Renderable for Widget<B> {
     fn draw(&self, renderer: &Renderer, target: &mut Frame, parent: &Mat) {
-        self.sprite.draw(renderer, target, parent);
+        if self.visible {
+            self.sprite.draw(renderer, target, parent);
+        }
     }
 }
 

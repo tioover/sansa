@@ -35,6 +35,7 @@ pub mod sprite;
 pub mod timer;
 pub mod widget;
 pub mod text;
+pub mod id;
 mod transform;
 mod mesh;
 mod camera;
