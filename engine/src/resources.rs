@@ -34,7 +34,7 @@ impl<'a, T: Resource> Manager<'a, T> {
         let mut map = self.map.borrow_mut();
         if map.contains_key(key) { let _ = map.remove(key); }
         let res = Rc::new(T::load(self.display, &key));
-        map.insert(key.clone(), res.clone().downgrade());
+        map.insert(key.clone(), Rc::downgrade(&res));
         return res;
     }
 
